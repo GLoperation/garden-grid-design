@@ -305,6 +305,7 @@ export default function App(){
   const[resH,setResH]=useState(null);
   const wr=useRef(null),ce=useRef(null),cb=useRef(null),chatRef=useRef(null);
   useEffect(()=>{if(cb.current)cb.current.scrollTop=cb.current.scrollHeight;},[msgs]);
+  const[clipboard,setClipboard]=useState(null);
   useEffect(()=>{const h=e=>{
     if(chatRef.current && chatRef.current.contains(e.target)) return;
     if(chatRef.current && chatRef.current.contains(document.activeElement)) return;
@@ -314,7 +315,22 @@ export default function App(){
     if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopImmediatePropagation();return;}
     if((e.key==="Backspace"||e.key==="Delete")&&selId){e.preventDefault();setPlants(p=>p.filter(x=>x.id!==selId));setBeds(p=>p.filter(x=>x.id!==selId));setSelId(null);}
     if(e.key==="Escape"){setActiveTool(null);setSelId(null);}
-  };window.addEventListener("keydown",h,true);return()=>window.removeEventListener("keydown",h,true);},[selId]);
+    // Copy
+    if((e.ctrlKey||e.metaKey)&&e.key==="c"&&selId){
+      e.preventDefault();
+      const pl=plants.find(x=>x.id===selId);
+      if(pl){setClipboard({type:"plant",data:{pid:pl.pid}});return;}
+      const bd=beds.find(x=>x.id===selId);
+      if(bd){setClipboard({type:"bed",data:{bid:bd.bid,wIn:bd.wIn,hIn:bd.hIn,custom:bd.custom}});return;}
+    }
+    // Paste
+    if((e.ctrlKey||e.metaKey)&&e.key==="v"&&clipboard){
+      e.preventDefault();
+      const cx=canvasSize.w*PX/2,cy=canvasSize.h*PX/2;
+      if(clipboard.type==="plant"){setPlants(pr=>[...pr,{id:uid(),pid:clipboard.data.pid,x:snap(cx),y:snap(cy)}]);}
+      if(clipboard.type==="bed"){setBeds(pr=>[...pr,{id:uid(),bid:clipboard.data.bid,x:snap(cx),y:snap(cy),wIn:clipboard.data.wIn,hIn:clipboard.data.hIn,custom:clipboard.data.custom||false}]);}
+    }
+  };window.addEventListener("keydown",h,true);return()=>window.removeEventListener("keydown",h,true);},[selId,clipboard,plants,beds,canvasSize]);
 
   const filtered=useMemo(()=>{let l=PLANTS;if(plantCat!=="All")l=l.filter(p=>p.cat===plantCat);if(searchQ){const q=searchQ.toLowerCase();l=l.filter(p=>p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));}return l;},[plantCat,searchQ]);
   const fBeds=useMemo(()=>BED_PRESETS.filter(b=>b.cat===bedCat),[bedCat]);
@@ -393,9 +409,22 @@ export default function App(){
   // Mobile sidebar toggle
   const [sideOpen,setSideOpen]=useState(typeof window!=="undefined"&&window.innerWidth>600);
 
-  const onDown=e=>{if(chatRef.current&&chatRef.current.contains(e.target))return;if(e.target.closest(".noc"))return;if(activeTool){const p=gp(e),sx=snap(p.x),sy=snap(p.y);if(activeTool.type==="plant")setPlants(pr=>[...pr,{id:uid(),pid:activeTool.data.id,x:sx,y:sy}]);else{const b=activeTool.data;setBeds(pr=>[...pr,{id:uid(),bid:b.id,x:sx,y:sy,wIn:b.wIn,hIn:b.hIn,custom:b.custom||false}]);}return;}setSelId(null);setIsPan(true);setPanS({x:e.clientX-pan.x,y:e.clientY-pan.y});};
+  const onDown=e=>{
+    // Right-click or middle-click cancels placement
+    if(e.button===1||e.button===2){e.preventDefault();setActiveTool(null);return;}
+    if(chatRef.current&&chatRef.current.contains(e.target))return;if(e.target.closest(".noc"))return;if(activeTool){const p=gp(e),sx=snap(p.x),sy=snap(p.y);if(activeTool.type==="plant")setPlants(pr=>[...pr,{id:uid(),pid:activeTool.data.id,x:sx,y:sy}]);else{const b=activeTool.data;setBeds(pr=>[...pr,{id:uid(),bid:b.id,x:sx,y:sy,wIn:b.wIn,hIn:b.hIn,custom:b.custom||false}]);}return;}setSelId(null);setIsPan(true);setPanS({x:e.clientX-pan.x,y:e.clientY-pan.y});};
+  const onContext=e=>{e.preventDefault();setActiveTool(null);};
 
-  const onMove=e=>{if(resH){const p=gp(e),dx=Math.round((p.x-resH.sx)/PX),dy=Math.round((p.y-resH.sy)/PX);setBeds(pr=>pr.map(b=>{if(b.id!==resH.bid)return b;const bed=BED_PRESETS.find(bp=>bp.id===b.bid);const ic=bed&&(bed.shape==="circle"||bed.shape==="keyhole");let nw=resH.ow,nh=resH.oh;if(resH.c==="se"){nw=resH.ow+dx;nh=ic?resH.ow+dx:resH.oh+dy;}else if(resH.c==="sw"){nw=resH.ow-dx;nh=ic?resH.ow-dx:resH.oh+dy;}else if(resH.c==="ne"){nw=resH.ow+dx;nh=ic?resH.ow+dx:resH.oh-dy;}else{nw=resH.ow-dx;nh=ic?resH.ow-dx:resH.oh-dy;}nw=Math.max(12,nw);nh=Math.max(12,nh);return{...b,wIn:nw,hIn:ic?nw:nh};}));return;}if(isPan&&panS){setPan({x:e.clientX-panS.x,y:e.clientY-panS.y});return;}if(drag&&dragS){setShowTrash(true);const p=gp(e),dx=p.x-dragS.x,dy=p.y-dragS.y;if(drag.t==="p")setPlants(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));else setBeds(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));const r=wr.current?.getBoundingClientRect();if(r){const rx=e.clientX-r.left,ry=e.clientY-r.top;setTrashH(rx<80&&ry>r.height-80);}}};
+  const onMove=e=>{if(resH){const p=gp(e),dx=Math.round((p.x-resH.sx)/PX),dy=Math.round((p.y-resH.sy)/PX);setBeds(pr=>pr.map(b=>{if(b.id!==resH.bid)return b;const bed=BED_PRESETS.find(bp=>bp.id===b.bid);const ic=bed&&(bed.shape==="circle"||bed.shape==="keyhole");let nw=resH.ow,nh=resH.oh;const c=resH.c;
+    if(c==="se"){nw=resH.ow+dx;nh=ic?resH.ow+dx:resH.oh+dy;}
+    else if(c==="sw"){nw=resH.ow-dx;nh=ic?resH.ow-dx:resH.oh+dy;}
+    else if(c==="ne"){nw=resH.ow+dx;nh=ic?resH.ow+dx:resH.oh-dy;}
+    else if(c==="nw"){nw=resH.ow-dx;nh=ic?resH.ow-dx:resH.oh-dy;}
+    else if(c==="e"){nw=resH.ow+dx;nh=ic?resH.ow+dx:resH.oh;}
+    else if(c==="w"){nw=resH.ow-dx;nh=ic?resH.ow-dx:resH.oh;}
+    else if(c==="s"){nh=ic?resH.oh+dy:resH.oh+dy;nw=ic?resH.oh+dy:resH.ow;}
+    else if(c==="n"){nh=ic?resH.oh-dy:resH.oh-dy;nw=ic?resH.oh-dy:resH.ow;}
+    nw=Math.max(12,nw);nh=Math.max(12,nh);return{...b,wIn:nw,hIn:ic?nw:nh};}));return;}if(isPan&&panS){setPan({x:e.clientX-panS.x,y:e.clientY-panS.y});return;}if(drag&&dragS){setShowTrash(true);const p=gp(e),dx=p.x-dragS.x,dy=p.y-dragS.y;if(drag.t==="p")setPlants(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));else setBeds(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));const r=wr.current?.getBoundingClientRect();if(r){const rx=e.clientX-r.left,ry=e.clientY-r.top;setTrashH(rx<80&&ry>r.height-80);}}};
 
   const onUp=()=>{if(resH){setResH(null);return;}if(drag&&trashH){if(drag.t==="p")setPlants(p=>p.filter(x=>x.id!==drag.id));else setBeds(p=>p.filter(x=>x.id!==drag.id));setSelId(null);}setIsPan(false);setPanS(null);setDrag(null);setDragS(null);setShowTrash(false);setTrashH(false);};
 
@@ -507,7 +536,20 @@ export default function App(){
   if(bed.shape==="circle")st.borderRadius="50%";else if(bed.shape==="keyhole"){st.borderRadius="50%";st.clipPath="polygon(0% 0%,100% 0%,100% 100%,55% 100%,55% 65%,45% 65%,45% 100%,0% 100%)";}else st.borderRadius="3px";
   if(isTrellis){st.backgroundImage="repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px),repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px)";}
   const dim=unit==="metric"?`${toM(b.wIn||bed.wIn)}×${toM(b.hIn||bed.hIn)}cm`:`${b.wIn||bed.wIn}″×${b.hIn||bed.hIn}″`;
-  const handles=b.custom&&sel?["nw","ne","sw","se"].map(c=>{const isT=c[0]==="n",isL=c[1]==="w";return <div key={c} onMouseDown={e=>stR(e,b,c)} style={{position:"absolute",width:10,height:10,top:isT?-5:"auto",bottom:isT?"auto":-5,left:isL?-5:"auto",right:isL?"auto":-5,background:"#fff",border:"2px solid #2b6cb0",borderRadius:"50%",cursor:c==="nw"||c==="se"?"nwse-resize":"nesw-resize",zIndex:30}}/>;})
+  const isCircleBed=bed.shape==="circle"||bed.shape==="keyhole";
+  const allHandles=isCircleBed?["e","w","n","s"]:["nw","ne","sw","se","n","s","e","w"];
+  const handles=b.custom&&sel?allHandles.map(c=>{
+    const hs=10;
+    let top="auto",bottom="auto",left="auto",right="auto",cur="pointer";
+    if(c==="nw"){top=-hs/2;left=-hs/2;cur="nwse-resize";}
+    else if(c==="ne"){top=-hs/2;right=-hs/2;cur="nesw-resize";}
+    else if(c==="sw"){bottom=-hs/2;left=-hs/2;cur="nesw-resize";}
+    else if(c==="se"){bottom=-hs/2;right=-hs/2;cur="nwse-resize";}
+    else if(c==="n"){top=-hs/2;left="calc(50% - 5px)";cur="ns-resize";}
+    else if(c==="s"){bottom=-hs/2;left="calc(50% - 5px)";cur="ns-resize";}
+    else if(c==="e"){right=-hs/2;top="calc(50% - 5px)";cur="ew-resize";}
+    else if(c==="w"){left=-hs/2;top="calc(50% - 5px)";cur="ew-resize";}
+    return <div key={c} onMouseDown={e=>stR(e,b,c)} onTouchStart={e=>{e.stopPropagation();if(e.touches.length!==1)return;const t=e.touches[0];const p=gp(touchToMouse(t));setResH({bid:b.id,c,sx:p.x,sy:p.y,ow:b.wIn,oh:b.hIn});}} style={{position:"absolute",width:hs,height:hs,top,bottom,left,right,background:"#fff",border:"2px solid #2b6cb0",borderRadius:c.length===1?3:"50%",cursor:cur,zIndex:30,touchAction:"none"}}/>;})
   :null;
   return <div key={b.id} style={st} onMouseDown={e=>{if(activeTool?.type==="plant"){return;}sdb(e,b);}} onTouchStart={e=>sdbTouch(e,b)}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
 
@@ -590,10 +632,10 @@ export default function App(){
 
     <div style={{display:"flex",flex:1,overflow:"hidden"}}>
       {/* SIDEBAR */}
-      {/* Mobile toggle */}
-      {!sideOpen&&<button onClick={()=>setSideOpen(true)} style={{position:"absolute",top:52,left:4,zIndex:90,width:36,height:36,borderRadius:8,background:T.accent,color:"#fff",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>☰</button>}
-      <aside style={{width:sideOpen?255:0,minWidth:sideOpen?255:0,borderRight:sideOpen?`1px solid ${T.border}`:"none",display:"flex",flexDirection:"column",background:T.side,flexShrink:0,overflow:"hidden",transition:"width .2s,min-width .2s",position:"relative"}}>
-        {sideOpen&&<button onClick={()=>setSideOpen(false)} style={{position:"absolute",top:4,right:4,zIndex:10,width:24,height:24,borderRadius:4,background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:T.textL,display:typeof window!=="undefined"&&window.innerWidth>600?"none":"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
+      {/* Mobile open toggle */}
+      {!sideOpen&&<button onClick={()=>setSideOpen(true)} style={{position:"absolute",top:52,left:4,zIndex:90,width:40,height:40,borderRadius:8,background:T.accent,color:"#fff",border:"none",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>☰</button>}
+      <aside style={{width:sideOpen?(typeof window!=="undefined"&&window.innerWidth<768?Math.min(280,window.innerWidth*.75):255):0,minWidth:sideOpen?(typeof window!=="undefined"&&window.innerWidth<768?Math.min(280,window.innerWidth*.75):255):0,borderRight:sideOpen?`1px solid ${T.border}`:"none",display:"flex",flexDirection:"column",background:T.side,flexShrink:0,overflow:"hidden",transition:"width .2s,min-width .2s",position:"relative",zIndex:60}}>
+        {sideOpen&&<button onClick={()=>setSideOpen(false)} style={{position:"absolute",top:6,right:6,zIndex:10,width:28,height:28,borderRadius:6,background:"rgba(0,0,0,.06)",border:"none",cursor:"pointer",fontSize:16,color:T.textM,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
         <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
           {[["🌱 Plants","plants"],["📐 Beds","beds"]].map(([l,k])=><button key={k} onClick={()=>setSideTab(k)} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:sideTab===k?T.accentL:T.side,color:sideTab===k?T.accentD:T.textL,borderBottom:sideTab===k?`2px solid ${T.accent}`:"2px solid transparent"}}>{l}</button>)}
         </div>
@@ -612,9 +654,17 @@ export default function App(){
 
       {/* CANVAS */}
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        <div ref={wr} style={{flex:1,overflow:"hidden",background:T.canBg,cursor:activeTool?"crosshair":isPan?"grabbing":"default",position:"relative",userSelect:"none",touchAction:"none"}} onMouseDown={onDown} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+        <div ref={wr} style={{flex:1,overflow:"hidden",background:T.canBg,cursor:activeTool?"crosshair":isPan?"grabbing":"default",position:"relative",userSelect:"none",touchAction:"none"}} onMouseDown={onDown} onContextMenu={onContext} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
           <RulerX/><RulerY/>
-          {selId&&<div style={{position:"absolute",top:24,left:"50%",transform:"translateX(-50%)",zIndex:50,display:"flex",gap:4,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 12px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",alignItems:"center"}}><span style={{fontSize:10,color:T.textM,fontWeight:600}}>Drag to 🗑 to delete</span></div>}
+          {selId&&<div style={{position:"absolute",top:24,left:"50%",transform:"translateX(-50%)",zIndex:50,display:"flex",gap:6,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 12px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",alignItems:"center"}}>
+            <button onClick={()=>{const pl=plants.find(x=>x.id===selId);if(pl){setClipboard({type:"plant",data:{pid:pl.pid}});return;}const bd=beds.find(x=>x.id===selId);if(bd)setClipboard({type:"bed",data:{bid:bd.bid,wIn:bd.wIn,hIn:bd.hIn,custom:bd.custom}});}} style={{padding:"3px 8px",border:`1px solid ${T.border}`,borderRadius:4,background:"#fff",cursor:"pointer",fontSize:10,fontWeight:600,color:T.textM}}>📋 Copy</button>
+            <span style={{fontSize:10,color:T.textM,fontWeight:600}}>Drag to 🗑 to delete</span>
+          </div>}
+          {clipboard&&!selId&&<div style={{position:"absolute",top:24,right:12,zIndex:50,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 10px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",display:"flex",gap:4,alignItems:"center"}}>
+            <span style={{fontSize:10,color:T.accent,fontWeight:600}}>📋 {clipboard.type==="plant"?PLANTS.find(p=>p.id===clipboard.data.pid)?.name:"Bed"} copied</span>
+            <button onClick={()=>{const cx=canvasSize.w*PX/2,cy=canvasSize.h*PX/2;if(clipboard.type==="plant")setPlants(pr=>[...pr,{id:uid(),pid:clipboard.data.pid,x:snap(cx),y:snap(cy)}]);if(clipboard.type==="bed")setBeds(pr=>[...pr,{id:uid(),bid:clipboard.data.bid,x:snap(cx),y:snap(cy),wIn:clipboard.data.wIn,hIn:clipboard.data.hIn,custom:clipboard.data.custom||false}]);}} style={{padding:"3px 8px",border:`1px solid ${T.accent}`,borderRadius:4,background:T.accentL,cursor:"pointer",fontSize:10,fontWeight:700,color:T.accentD}}>Paste</button>
+            <button onClick={()=>setClipboard(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:T.textL}}>✕</button>
+          </div>}
           {showTrash&&<div style={{position:"absolute",bottom:12,left:12,zIndex:50,width:96,height:96,borderRadius:16,background:trashH?"#fed7d7":"rgba(255,255,255,.9)",border:`2px dashed ${trashH?"#e53e3e":"#cbd5e0"}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",transition:"all .15s",transform:trashH?"scale(1.1)":"scale(1)"}}><span style={{fontSize:36}}>🗑</span><span style={{fontSize:10,color:trashH?"#e53e3e":"#999",fontWeight:700}}>Drop to delete</span></div>}
           <div style={{transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`,transformOrigin:"0 0",width:cW,height:cH,position:"relative",background:"linear-gradient(135deg,#8a9e5a 0%,#7d9450 15%,#95a86a 30%,#6d843f 45%,#8a9e5a 60%,#7a8f4d 75%,#92a565 90%,#6d843f 100%)",boxShadow:"0 1px 8px rgba(0,0,0,.08)"}}>
             {/* Grid lines — behind everything */}
