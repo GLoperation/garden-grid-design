@@ -322,7 +322,76 @@ export default function App(){
   const handleWheel=useCallback(e=>{if(cb.current?.contains(e.target))return;e.preventDefault();setZoom(z=>Math.min(4,Math.max(.15,z+(e.deltaY>0?-.06:.06))));},[]);
   useEffect(()=>{const el=wr.current;if(el)el.addEventListener("wheel",handleWheel,{passive:false});return()=>{if(el)el.removeEventListener("wheel",handleWheel);};},[handleWheel]);
 
-  const gp=e=>{const r=wr.current?.getBoundingClientRect();if(!r)return{x:0,y:0};return{x:(e.clientX-r.left-pan.x)/zoom,y:(e.clientY-r.top-pan.y)/zoom};};
+  // Touch support
+  const lastTouchRef=useRef(null);
+  const pinchRef=useRef(null);
+  const touchToMouse=(t)=>({clientX:t.clientX,clientY:t.clientY,target:t.target,stopPropagation:()=>{},preventDefault:()=>{}});
+  const gp=e=>{const r=wr.current?.getBoundingClientRect();if(!r)return{x:0,y:0};const cx=e.clientX!==undefined?e.clientX:(e.touches?.[0]?.clientX||0);const cy=e.clientY!==undefined?e.clientY:(e.touches?.[0]?.clientY||0);return{x:(cx-r.left-pan.x)/zoom,y:(cy-r.top-pan.y)/zoom};};
+
+  const getTouchDist=(t)=>{if(t.length<2)return 0;const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);};
+
+  // Canvas touch handlers
+  const onTouchStart=useCallback(e=>{
+    if(e.target.closest(".noc"))return;
+    if(e.touches.length===2){e.preventDefault();pinchRef.current={dist:getTouchDist(e.touches),zoom:zoom};return;}
+    if(e.touches.length!==1)return;
+    const t=e.touches[0];
+    lastTouchRef.current={x:t.clientX,y:t.clientY,time:Date.now()};
+    const fake=touchToMouse(t);fake.target=e.target;
+    if(activeTool){
+      const p=gp(fake),sx=snap(p.x),sy=snap(p.y);
+      if(activeTool.type==="plant")setPlants(pr=>[...pr,{id:uid(),pid:activeTool.data.id,x:sx,y:sy}]);
+      else{const b=activeTool.data;setBeds(pr=>[...pr,{id:uid(),bid:b.id,x:sx,y:sy,wIn:b.wIn,hIn:b.hIn,custom:b.custom||false}]);}
+      return;
+    }
+    setSelId(null);setIsPan(true);setPanS({x:t.clientX-pan.x,y:t.clientY-pan.y});
+  },[activeTool,pan,zoom]);
+
+  const onTouchMove=useCallback(e=>{
+    if(e.target.closest(".noc"))return;
+    if(e.touches.length===2&&pinchRef.current){
+      e.preventDefault();
+      const newDist=getTouchDist(e.touches);
+      const scale=newDist/pinchRef.current.dist;
+      setZoom(Math.min(4,Math.max(.15,pinchRef.current.zoom*scale)));
+      return;
+    }
+    if(e.touches.length!==1)return;
+    const t=e.touches[0];
+    const fake=touchToMouse(t);
+    if(isPan&&panS){e.preventDefault();setPan({x:t.clientX-panS.x,y:t.clientY-panS.y});return;}
+    if(drag&&dragS){
+      e.preventDefault();setShowTrash(true);
+      const p=gp(fake),dx=p.x-dragS.x,dy=p.y-dragS.y;
+      if(drag.t==="p")setPlants(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));
+      else setBeds(pr=>pr.map(x=>x.id===drag.id?{...x,x:snap(drag.ox+dx),y:snap(drag.oy+dy)}:x));
+      const r=wr.current?.getBoundingClientRect();
+      if(r){const rx=t.clientX-r.left,ry=t.clientY-r.top;setTrashH(rx<96&&ry>r.height-96);}
+    }
+  },[isPan,panS,drag,dragS,zoom]);
+
+  const onTouchEnd=useCallback(()=>{
+    pinchRef.current=null;lastTouchRef.current=null;
+    if(resH){setResH(null);return;}
+    if(drag&&trashH){if(drag.t==="p")setPlants(p=>p.filter(x=>x.id!==drag.id));else setBeds(p=>p.filter(x=>x.id!==drag.id));setSelId(null);}
+    setIsPan(false);setPanS(null);setDrag(null);setDragS(null);setShowTrash(false);setTrashH(false);
+  },[drag,trashH,resH]);
+
+  // Plant touch drag
+  const sdpTouch=(e,p)=>{e.stopPropagation();if(e.touches.length!==1)return;const t=e.touches[0];setSelId(p.id);setActiveTool(null);setDrag({t:"p",id:p.id,ox:p.x,oy:p.y});setDragS(gp(touchToMouse(t)));};
+  // Bed touch drag
+  const sdbTouch=(e,b)=>{e.stopPropagation();if(activeTool?.type==="plant")return;if(e.touches.length!==1)return;const t=e.touches[0];setSelId(b.id);setActiveTool(null);setDrag({t:"b",id:b.id,ox:b.x,oy:b.y});setDragS(gp(touchToMouse(t)));};
+
+  // Prevent default touch on canvas to stop browser zoom/scroll
+  useEffect(()=>{
+    const el=wr.current;if(!el)return;
+    const prevent=e=>{if(!e.target.closest(".noc"))e.preventDefault();};
+    el.addEventListener("touchmove",prevent,{passive:false});
+    return()=>el.removeEventListener("touchmove",prevent);
+  },[]);
+
+  // Mobile sidebar toggle
+  const [sideOpen,setSideOpen]=useState(typeof window!=="undefined"&&window.innerWidth>600);
 
   const onDown=e=>{if(chatRef.current&&chatRef.current.contains(e.target))return;if(e.target.closest(".noc"))return;if(activeTool){const p=gp(e),sx=snap(p.x),sy=snap(p.y);if(activeTool.type==="plant")setPlants(pr=>[...pr,{id:uid(),pid:activeTool.data.id,x:sx,y:sy}]);else{const b=activeTool.data;setBeds(pr=>[...pr,{id:uid(),bid:b.id,x:sx,y:sy,wIn:b.wIn,hIn:b.hIn,custom:b.custom||false}]);}return;}setSelId(null);setIsPan(true);setPanS({x:e.clientX-pan.x,y:e.clientY-pan.y});};
 
@@ -346,25 +415,16 @@ export default function App(){
     setShowDLMenu(false);
   };
 
-<<<<<<< HEAD
   const exportPNG=async()=>{
     const canvas=document.createElement("canvas");
     const cW2=canvasSize.w*PX,cH2=canvasSize.h*PX;
     const scale=3;canvas.width=cW2*scale;canvas.height=cH2*scale;
     const ctx=canvas.getContext("2d");ctx.scale(scale,scale);
     // Background
-=======
-  const exportPNG=()=>{
-    const canvas=document.createElement("canvas");
-    const cW2=canvasSize.w*PX,cH2=canvasSize.h*PX;
-    const scale=2;canvas.width=cW2*scale;canvas.height=cH2*scale;
-    const ctx=canvas.getContext("2d");ctx.scale(scale,scale);
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
     ctx.fillStyle="#7d9450";ctx.fillRect(0,0,cW2,cH2);
     ctx.strokeStyle="rgba(255,255,255,0.2)";ctx.lineWidth=0.4;
     for(let x=0;x<=cW2;x+=GP){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cH2);ctx.stroke();}
     for(let y=0;y<=cH2;y+=GP){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cW2,y);ctx.stroke();}
-<<<<<<< HEAD
     // Beds
     beds.forEach(b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return;const w2=(b.wIn||bed.wIn)*PX,h3=(b.hIn||bed.hIn)*PX;ctx.fillStyle="rgb(50,30,10)";ctx.strokeStyle=bed.matBorder;ctx.lineWidth=2;if(bed.shape==="circle"){ctx.beginPath();ctx.arc(b.x+w2/2,b.y+h3/2,w2/2,0,Math.PI*2);ctx.fill();ctx.stroke();}else{ctx.fillRect(b.x,b.y,w2,h3);ctx.strokeRect(b.x,b.y,w2,h3);}
       ctx.fillStyle="#fff";ctx.font="bold 7px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(bed.name,b.x+w2/2,b.y+h3/2);
@@ -379,10 +439,6 @@ export default function App(){
       ctx.fillStyle="#fff";ctx.font="bold 7px sans-serif";ctx.textAlign="center";ctx.textBaseline="top";ctx.fillText(p.name.split("(")[0].trim().split(" ").slice(0,2).join(" "),pl.x+14,pl.y+30);
     };
     for(const pl of plants)await renderIcon(pl);
-=======
-    beds.forEach(b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return;const w2=(b.wIn||bed.wIn)*PX,h3=(b.hIn||bed.hIn)*PX;ctx.fillStyle="#8B6914";ctx.strokeStyle=bed.matBorder;ctx.lineWidth=2;if(bed.shape==="circle"){ctx.beginPath();ctx.arc(b.x+w2/2,b.y+h3/2,w2/2,0,Math.PI*2);ctx.fill();ctx.stroke();}else{ctx.fillRect(b.x,b.y,w2,h3);ctx.strokeRect(b.x,b.y,w2,h3);}});
-    plants.forEach(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return;ctx.fillStyle=p.color||"#48bb78";ctx.beginPath();ctx.arc(pl.x+14,pl.y+14,10,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(p.name.slice(0,3),pl.x+14,pl.y+14);});
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
     const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=`${projectName.replace(/\s+/g,"_")}.png`;a.click();
     setShowDLMenu(false);
   };
@@ -405,7 +461,6 @@ export default function App(){
 
   const sendChat=async()=>{if(!chatIn.trim()||chatBusy)return;const m=chatIn.trim();setChatIn("");setMsgs(p=>[...p,{role:"user",content:m}]);setChatBusy(true);try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...msgs.slice(-8),{role:"user",content:m}]})});const d=await r.json();if(d.error){setMsgs(p=>[...p,{role:"assistant",content:d.error}]);}else{setMsgs(p=>[...p,{role:"assistant",content:d.content?.map(c=>c.text||"").join("")||"Sorry, try again!"}]);}}catch{setMsgs(p=>[...p,{role:"assistant",content:"Connection issue. Please try again."}]);}setChatBusy(false);};
 
-<<<<<<< HEAD
   // Overlap & companion detection — green when companion circles touch, orange/red for bad overlaps
   const plantRelations=useMemo(()=>{
     const m=new Map();
@@ -438,12 +493,6 @@ export default function App(){
     });});
     return m;
   },[plants]);
-=======
-  // Overlap & companion detection
-  const overlapInfo=useMemo(()=>{const m=new Map();plants.forEach((a,i)=>{plants.forEach((b,j)=>{if(j<=i)return;const pa=PLANTS.find(p=>p.id===a.pid),pb=PLANTS.find(p=>p.id===b.pid);if(!pa||!pb)return;const d=Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);const minD=((pa.spacingIn+pb.spacingIn)/2)*PX;if(d<minD){const pct=1-d/minD;const severity=pct>=.25?"red":"orange";[a.id,b.id].forEach(id=>{const cur=m.get(id);if(!cur||severity==="red")m.set(id,severity);});}});});return m;},[plants]);
-
-  const companionInfo=useMemo(()=>{const m=new Set();plants.forEach((a,i)=>{plants.forEach((b,j)=>{if(j<=i)return;const pa=PLANTS.find(p=>p.id===a.pid),pb=PLANTS.find(p=>p.id===b.pid);if(!pa||!pb)return;const d=Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);const maxR=Math.max(pa.spacingIn,pb.spacingIn)*PX;const isCompanion=(pa.companions||[]).includes(pb.name.split(" ")[0])||(pb.companions||[]).includes(pa.name.split(" ")[0])||(pa.companions||[]).some(c=>pb.name.includes(c))||(pb.companions||[]).some(c=>pa.name.includes(c));if(isCompanion&&d<=maxR&&!overlapInfo.has(a.id)&&!overlapInfo.has(b.id)){m.add(a.id);m.add(b.id);}});});return m;},[plants,overlapInfo]);
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
 
   const cW=canvasSize.w*PX,cH=canvasSize.h*PX;
   const gridSVG=useMemo(()=>{const l=[];for(let x=0;x<=cW;x+=GP){const mj=x%(48)===0;l.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={cH} stroke={mj?"rgba(255,255,255,.35)":"rgba(255,255,255,.15)"} strokeWidth={mj?.7:.3}/>);}for(let y=0;y<=cH;y+=GP){const mj=y%(48)===0;l.push(<line key={`h${y}`} x1={0} y1={y} x2={cW} y2={y} stroke={mj?"rgba(255,255,255,.35)":"rgba(255,255,255,.15)"} strokeWidth={mj?.7:.3}/>);}return l;},[cW,cH]);
@@ -454,21 +503,13 @@ export default function App(){
 
   const RulerY=()=>{const step=48,labels=[];for(let y=0;y<=cH;y+=step){const i=y/PX;const label=unit==="metric"?`${(i*2.54/100).toFixed(1)}m`:`${i/12}'`;const sy=y*zoom+pan.y;labels.push(<div key={y} style={{position:"absolute",top:sy,left:2,fontSize:9,color:"#1a1a1a",fontWeight:600,transform:"translateY(-50%)",whiteSpace:"nowrap"}}>{label}</div>);}return <div style={{position:"absolute",top:0,left:0,bottom:0,width:30,background:"rgba(250,248,245,.95)",borderRight:`1px solid ${T.hBorder}`,zIndex:20,pointerEvents:"none"}}>{labels}</div>;};
 
-<<<<<<< HEAD
-  const renderBed=b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return null;const w=(b.wIn||bed.wIn)*PX,h2=(b.hIn||bed.hIn)*PX;const sel=selId===b.id;const isTrellis=bed.trellis;const dirtColor="rgb(50,30,10)";const st={position:"absolute",left:b.x,top:b.y,width:w,height:h2,border:`${sel?3:2}px ${bed.cat==="Grow Bag"?"dashed":isTrellis?"dotted":"solid"} ${sel?"#2b6cb0":bed.matBorder}`,backgroundColor:isTrellis?"rgba(139,115,85,.08)":dirtColor,cursor:drag?.id===b.id?"grabbing":"grab",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600,userSelect:"none",zIndex:sel?5:1,boxShadow:sel?"0 0 0 2px rgba(43,108,176,.3)":"none",textShadow:"0 1px 2px rgba(0,0,0,.4)"};
-=======
-  const renderBed=b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return null;const w=(b.wIn||bed.wIn)*PX,h2=(b.hIn||bed.hIn)*PX;const sel=selId===b.id;const isTrellis=bed.trellis;const dirtColor="rgba(120,85,40,.65)";const st={position:"absolute",left:b.x,top:b.y,width:w,height:h2,border:`${sel?3:2}px ${bed.cat==="Grow Bag"?"dashed":isTrellis?"dotted":"solid"} ${sel?"#2b6cb0":bed.matBorder}`,backgroundColor:isTrellis?"rgba(139,115,85,.08)":dirtColor,cursor:drag?.id===b.id?"grabbing":"grab",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600,userSelect:"none",zIndex:sel?5:1,boxShadow:sel?"0 0 0 2px rgba(43,108,176,.3)":"none",textShadow:"0 1px 2px rgba(0,0,0,.4)"};
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
+  const renderBed=b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return null;const w=(b.wIn||bed.wIn)*PX,h2=(b.hIn||bed.hIn)*PX;const sel=selId===b.id;const isTrellis=bed.trellis;const dirtColor="rgb(50,30,10)";const st={position:"absolute",left:b.x,top:b.y,width:w,height:h2,border:`${sel?3:2}px ${bed.cat==="Grow Bag"?"dashed":isTrellis?"dotted":"solid"} ${sel?"#2b6cb0":bed.matBorder}`,backgroundColor:isTrellis?"rgba(139,115,85,.08)":dirtColor,cursor:drag?.id===b.id?"grabbing":"grab",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600,userSelect:"none",zIndex:sel?5:1,boxShadow:sel?"0 0 0 2px rgba(43,108,176,.3)":"none",textShadow:"0 1px 2px rgba(0,0,0,.4)",touchAction:"none"};
   if(bed.shape==="circle")st.borderRadius="50%";else if(bed.shape==="keyhole"){st.borderRadius="50%";st.clipPath="polygon(0% 0%,100% 0%,100% 100%,55% 100%,55% 65%,45% 65%,45% 100%,0% 100%)";}else st.borderRadius="3px";
   if(isTrellis){st.backgroundImage="repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px),repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px)";}
   const dim=unit==="metric"?`${toM(b.wIn||bed.wIn)}×${toM(b.hIn||bed.hIn)}cm`:`${b.wIn||bed.wIn}″×${b.hIn||bed.hIn}″`;
   const handles=b.custom&&sel?["nw","ne","sw","se"].map(c=>{const isT=c[0]==="n",isL=c[1]==="w";return <div key={c} onMouseDown={e=>stR(e,b,c)} style={{position:"absolute",width:10,height:10,top:isT?-5:"auto",bottom:isT?"auto":-5,left:isL?-5:"auto",right:isL?"auto":-5,background:"#fff",border:"2px solid #2b6cb0",borderRadius:"50%",cursor:c==="nw"||c==="se"?"nwse-resize":"nesw-resize",zIndex:30}}/>;})
   :null;
-<<<<<<< HEAD
-  return <div key={b.id} style={st} onMouseDown={e=>{if(activeTool?.type==="plant"){return;}sdb(e,b);}}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
-=======
-  return <div key={b.id} style={st} onMouseDown={e=>sdb(e,b)}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
+  return <div key={b.id} style={st} onMouseDown={e=>{if(activeTool?.type==="plant"){return;}sdb(e,b);}} onTouchStart={e=>sdbTouch(e,b)}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
 
   const InfoPanel=({plant:p,onClose})=>{ return (
     <div style={{position:"fixed",top:0,right:0,width:310,height:"100%",background:"#fff",boxShadow:"-4px 0 20px rgba(0,0,0,.1)",zIndex:1000,overflowY:"auto",borderLeft:"1px solid #ddd"}}>
@@ -509,7 +550,7 @@ export default function App(){
   ); };
 
   return (
-    <div style={{display:"flex",flexDirection:"column",height:"100vh",width:"100vw",fontFamily:"'DM Sans',system-ui,sans-serif",background:T.bg,color:T.text,overflow:"hidden",fontSize:13}} onMouseMove={onMove} onMouseUp={onUp}>
+    <div style={{display:"flex",flexDirection:"column",height:"100vh",width:"100vw",fontFamily:"'DM Sans',system-ui,sans-serif",background:T.bg,color:T.text,overflow:"hidden",fontSize:13}} onMouseMove={onMove} onMouseUp={onUp} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
     {/* HEADER */}
     <header style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px",height:46,borderBottom:`1px solid ${T.hBorder}`,background:T.head,flexShrink:0,zIndex:100}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -549,7 +590,10 @@ export default function App(){
 
     <div style={{display:"flex",flex:1,overflow:"hidden"}}>
       {/* SIDEBAR */}
-      <aside style={{width:255,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",background:T.side,flexShrink:0}}>
+      {/* Mobile toggle */}
+      {!sideOpen&&<button onClick={()=>setSideOpen(true)} style={{position:"absolute",top:52,left:4,zIndex:90,width:36,height:36,borderRadius:8,background:T.accent,color:"#fff",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>☰</button>}
+      <aside style={{width:sideOpen?255:0,minWidth:sideOpen?255:0,borderRight:sideOpen?`1px solid ${T.border}`:"none",display:"flex",flexDirection:"column",background:T.side,flexShrink:0,overflow:"hidden",transition:"width .2s,min-width .2s",position:"relative"}}>
+        {sideOpen&&<button onClick={()=>setSideOpen(false)} style={{position:"absolute",top:4,right:4,zIndex:10,width:24,height:24,borderRadius:4,background:"transparent",border:"none",cursor:"pointer",fontSize:14,color:T.textL,display:typeof window!=="undefined"&&window.innerWidth>600?"none":"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
         <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
           {[["🌱 Plants","plants"],["📐 Beds","beds"]].map(([l,k])=><button key={k} onClick={()=>setSideTab(k)} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:sideTab===k?T.accentL:T.side,color:sideTab===k?T.accentD:T.textL,borderBottom:sideTab===k?`2px solid ${T.accent}`:"2px solid transparent"}}>{l}</button>)}
         </div>
@@ -568,12 +612,11 @@ export default function App(){
 
       {/* CANVAS */}
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        <div ref={wr} style={{flex:1,overflow:"hidden",background:T.canBg,cursor:activeTool?"crosshair":isPan?"grabbing":"default",position:"relative",userSelect:"none"}} onMouseDown={onDown}>
+        <div ref={wr} style={{flex:1,overflow:"hidden",background:T.canBg,cursor:activeTool?"crosshair":isPan?"grabbing":"default",position:"relative",userSelect:"none",touchAction:"none"}} onMouseDown={onDown} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
           <RulerX/><RulerY/>
-          {selId&&<div style={{position:"absolute",top:24,left:"50%",transform:"translateX(-50%)",zIndex:50,display:"flex",gap:4,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 12px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",alignItems:"center"}}><span style={{fontSize:10,color:T.textM,fontWeight:600}}>Press Backspace to delete or drag to 🗑</span></div>}
+          {selId&&<div style={{position:"absolute",top:24,left:"50%",transform:"translateX(-50%)",zIndex:50,display:"flex",gap:4,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 12px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",alignItems:"center"}}><span style={{fontSize:10,color:T.textM,fontWeight:600}}>Drag to 🗑 to delete</span></div>}
           {showTrash&&<div style={{position:"absolute",bottom:12,left:12,zIndex:50,width:96,height:96,borderRadius:16,background:trashH?"#fed7d7":"rgba(255,255,255,.9)",border:`2px dashed ${trashH?"#e53e3e":"#cbd5e0"}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",transition:"all .15s",transform:trashH?"scale(1.1)":"scale(1)"}}><span style={{fontSize:36}}>🗑</span><span style={{fontSize:10,color:trashH?"#e53e3e":"#999",fontWeight:700}}>Drop to delete</span></div>}
           <div style={{transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`,transformOrigin:"0 0",width:cW,height:cH,position:"relative",background:"linear-gradient(135deg,#8a9e5a 0%,#7d9450 15%,#95a86a 30%,#6d843f 45%,#8a9e5a 60%,#7a8f4d 75%,#92a565 90%,#6d843f 100%)",boxShadow:"0 1px 8px rgba(0,0,0,.08)"}}>
-<<<<<<< HEAD
             {/* Grid lines — behind everything */}
             <svg style={{position:"absolute",top:0,left:0,width:cW,height:cH,pointerEvents:"none",zIndex:0}}>{gridSVG}</svg>
             {/* Beds — pointer-events disabled when placing plants */}
@@ -585,13 +628,7 @@ export default function App(){
               {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;const rel=plantRelations.get(pl.id);const r=(p.spacingIn/2)*PX;const col=rel==="red"?"rgba(220,38,38,.12)":rel==="orange"?"rgba(237,137,54,.12)":rel==="companion"?"rgba(34,197,94,.18)":sel?"rgba(66,153,225,.12)":"rgba(255,255,255,.08)";const sc=rel==="red"?"#dc2626":rel==="orange"?"#ed8936":rel==="companion"?"#16a34a":sel?"#4299e1":"rgba(255,255,255,.3)";return <circle key={pl.id} cx={pl.x+14} cy={pl.y+14} r={r} fill={col} stroke={sc} strokeWidth={sel||rel?1.5:.6} strokeDasharray={sel||rel?"none":"4 2"}/>;})}
             </svg>
             {/* Plant icons — on top of everything */}
-            {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;return <div key={pl.id} data-plant-id={pl.id} style={{position:"absolute",left:pl.x,top:pl.y,width:28,height:28,cursor:drag?.id===pl.id?"grabbing":"grab",zIndex:sel?20:10,filter:sel?"drop-shadow(0 0 3px #4299e1)":"drop-shadow(0 1px 2px rgba(0,0,0,.3))"}} onMouseDown={e=>sdp(e,pl)} title={p.name}><PlantSVG plant={p} size={28}/>{sel&&<div style={{position:"absolute",top:-16,left:-4,background:"#fff",border:"1px solid #ddd",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,whiteSpace:"nowrap",color:"#1a1a1a"}}>{p.name}</div>}</div>;})}
-=======
-            <svg style={{position:"absolute",top:0,left:0,width:cW,height:cH,pointerEvents:"none"}}>{gridSVG}
-              {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;const ov=overlapInfo.get(pl.id);const isComp=companionInfo.has(pl.id);const r=(p.spacingIn/2)*PX;const col=ov==="red"?"rgba(220,38,38,.12)":ov==="orange"?"rgba(237,137,54,.12)":isComp?"rgba(34,197,94,.15)":sel?"rgba(66,153,225,.12)":"rgba(255,255,255,.08)";const sc=ov==="red"?"#dc2626":ov==="orange"?"#ed8936":isComp?"#22c55e":sel?"#4299e1":"rgba(255,255,255,.3)";return <circle key={pl.id} cx={pl.x+14} cy={pl.y+14} r={r} fill={col} stroke={sc} strokeWidth={sel||ov||isComp?1.5:.6} strokeDasharray={sel||ov||isComp?"none":"4 2"}/>;})}</svg>
-            {beds.map(renderBed)}
-            {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;return <div key={pl.id} style={{position:"absolute",left:pl.x,top:pl.y,width:28,height:28,cursor:drag?.id===pl.id?"grabbing":"grab",zIndex:sel?20:10,filter:sel?"drop-shadow(0 0 3px #4299e1)":"drop-shadow(0 1px 2px rgba(0,0,0,.3))"}} onMouseDown={e=>sdp(e,pl)} title={p.name}><PlantSVG plant={p} size={28}/>{sel&&<div style={{position:"absolute",top:-16,left:-4,background:"#fff",border:"1px solid #ddd",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,whiteSpace:"nowrap",color:"#1a1a1a"}}>{p.name}</div>}</div>;})}
->>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
+            {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;return <div key={pl.id} data-plant-id={pl.id} style={{position:"absolute",left:pl.x,top:pl.y,width:28,height:28,cursor:drag?.id===pl.id?"grabbing":"grab",zIndex:sel?20:10,filter:sel?"drop-shadow(0 0 3px #4299e1)":"drop-shadow(0 1px 2px rgba(0,0,0,.3))",touchAction:"none"}} onMouseDown={e=>sdp(e,pl)} onTouchStart={e=>sdpTouch(e,pl)} title={p.name}><PlantSVG plant={p} size={28}/>{sel&&<div style={{position:"absolute",top:-16,left:-4,background:"#fff",border:"1px solid #ddd",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,whiteSpace:"nowrap",color:"#1a1a1a"}}>{p.name}</div>}</div>;})}
           </div>
 
           {/* CHAT */}
@@ -612,7 +649,7 @@ export default function App(){
       </div>
     </div>
     {pInfo&&<InfoPanel plant={pInfo} onClose={()=>setPInfo(null)}/>}
-    <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}button:hover{opacity:.88}button:active{transform:scale(.97)}input:focus{border-color:${T.accent}!important}@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');`}</style>
+    <style>{`*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{touch-action:manipulation;overscroll-behavior:none}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}button:hover{opacity:.88}button:active{transform:scale(.97)}input:focus{border-color:${T.accent}!important}@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');`}</style>
   </div>
   );
 }
