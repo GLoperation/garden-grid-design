@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌱 GardenGridDesign
 
 A fully interactive garden planning application for designing food gardens with real plant spacing data, drag-and-drop placement, and an AI garden assistant.
@@ -95,3 +96,9 @@ garden-app/
 - Vite 5
 - No additional UI libraries — pure React with inline styles
 - Anthropic Claude API (optional, for chat)
+=======
+# 🌱 GardenGridDesign —
+
+A fully interactive garden planning app. This package is ready to deploy to **Vercel for free**.
+
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b

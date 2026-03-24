@@ -346,16 +346,25 @@ export default function App(){
     setShowDLMenu(false);
   };
 
+<<<<<<< HEAD
   const exportPNG=async()=>{
     const canvas=document.createElement("canvas");
     const cW2=canvasSize.w*PX,cH2=canvasSize.h*PX;
     const scale=3;canvas.width=cW2*scale;canvas.height=cH2*scale;
     const ctx=canvas.getContext("2d");ctx.scale(scale,scale);
     // Background
+=======
+  const exportPNG=()=>{
+    const canvas=document.createElement("canvas");
+    const cW2=canvasSize.w*PX,cH2=canvasSize.h*PX;
+    const scale=2;canvas.width=cW2*scale;canvas.height=cH2*scale;
+    const ctx=canvas.getContext("2d");ctx.scale(scale,scale);
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
     ctx.fillStyle="#7d9450";ctx.fillRect(0,0,cW2,cH2);
     ctx.strokeStyle="rgba(255,255,255,0.2)";ctx.lineWidth=0.4;
     for(let x=0;x<=cW2;x+=GP){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cH2);ctx.stroke();}
     for(let y=0;y<=cH2;y+=GP){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cW2,y);ctx.stroke();}
+<<<<<<< HEAD
     // Beds
     beds.forEach(b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return;const w2=(b.wIn||bed.wIn)*PX,h3=(b.hIn||bed.hIn)*PX;ctx.fillStyle="rgb(50,30,10)";ctx.strokeStyle=bed.matBorder;ctx.lineWidth=2;if(bed.shape==="circle"){ctx.beginPath();ctx.arc(b.x+w2/2,b.y+h3/2,w2/2,0,Math.PI*2);ctx.fill();ctx.stroke();}else{ctx.fillRect(b.x,b.y,w2,h3);ctx.strokeRect(b.x,b.y,w2,h3);}
       ctx.fillStyle="#fff";ctx.font="bold 7px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(bed.name,b.x+w2/2,b.y+h3/2);
@@ -370,6 +379,10 @@ export default function App(){
       ctx.fillStyle="#fff";ctx.font="bold 7px sans-serif";ctx.textAlign="center";ctx.textBaseline="top";ctx.fillText(p.name.split("(")[0].trim().split(" ").slice(0,2).join(" "),pl.x+14,pl.y+30);
     };
     for(const pl of plants)await renderIcon(pl);
+=======
+    beds.forEach(b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return;const w2=(b.wIn||bed.wIn)*PX,h3=(b.hIn||bed.hIn)*PX;ctx.fillStyle="#8B6914";ctx.strokeStyle=bed.matBorder;ctx.lineWidth=2;if(bed.shape==="circle"){ctx.beginPath();ctx.arc(b.x+w2/2,b.y+h3/2,w2/2,0,Math.PI*2);ctx.fill();ctx.stroke();}else{ctx.fillRect(b.x,b.y,w2,h3);ctx.strokeRect(b.x,b.y,w2,h3);}});
+    plants.forEach(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return;ctx.fillStyle=p.color||"#48bb78";ctx.beginPath();ctx.arc(pl.x+14,pl.y+14,10,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(p.name.slice(0,3),pl.x+14,pl.y+14);});
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
     const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=`${projectName.replace(/\s+/g,"_")}.png`;a.click();
     setShowDLMenu(false);
   };
@@ -392,6 +405,7 @@ export default function App(){
 
   const sendChat=async()=>{if(!chatIn.trim()||chatBusy)return;const m=chatIn.trim();setChatIn("");setMsgs(p=>[...p,{role:"user",content:m}]);setChatBusy(true);try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...msgs.slice(-8),{role:"user",content:m}]})});const d=await r.json();if(d.error){setMsgs(p=>[...p,{role:"assistant",content:d.error}]);}else{setMsgs(p=>[...p,{role:"assistant",content:d.content?.map(c=>c.text||"").join("")||"Sorry, try again!"}]);}}catch{setMsgs(p=>[...p,{role:"assistant",content:"Connection issue. Please try again."}]);}setChatBusy(false);};
 
+<<<<<<< HEAD
   // Overlap & companion detection — green when companion circles touch, orange/red for bad overlaps
   const plantRelations=useMemo(()=>{
     const m=new Map();
@@ -424,6 +438,12 @@ export default function App(){
     });});
     return m;
   },[plants]);
+=======
+  // Overlap & companion detection
+  const overlapInfo=useMemo(()=>{const m=new Map();plants.forEach((a,i)=>{plants.forEach((b,j)=>{if(j<=i)return;const pa=PLANTS.find(p=>p.id===a.pid),pb=PLANTS.find(p=>p.id===b.pid);if(!pa||!pb)return;const d=Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);const minD=((pa.spacingIn+pb.spacingIn)/2)*PX;if(d<minD){const pct=1-d/minD;const severity=pct>=.25?"red":"orange";[a.id,b.id].forEach(id=>{const cur=m.get(id);if(!cur||severity==="red")m.set(id,severity);});}});});return m;},[plants]);
+
+  const companionInfo=useMemo(()=>{const m=new Set();plants.forEach((a,i)=>{plants.forEach((b,j)=>{if(j<=i)return;const pa=PLANTS.find(p=>p.id===a.pid),pb=PLANTS.find(p=>p.id===b.pid);if(!pa||!pb)return;const d=Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);const maxR=Math.max(pa.spacingIn,pb.spacingIn)*PX;const isCompanion=(pa.companions||[]).includes(pb.name.split(" ")[0])||(pb.companions||[]).includes(pa.name.split(" ")[0])||(pa.companions||[]).some(c=>pb.name.includes(c))||(pb.companions||[]).some(c=>pa.name.includes(c));if(isCompanion&&d<=maxR&&!overlapInfo.has(a.id)&&!overlapInfo.has(b.id)){m.add(a.id);m.add(b.id);}});});return m;},[plants,overlapInfo]);
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
 
   const cW=canvasSize.w*PX,cH=canvasSize.h*PX;
   const gridSVG=useMemo(()=>{const l=[];for(let x=0;x<=cW;x+=GP){const mj=x%(48)===0;l.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={cH} stroke={mj?"rgba(255,255,255,.35)":"rgba(255,255,255,.15)"} strokeWidth={mj?.7:.3}/>);}for(let y=0;y<=cH;y+=GP){const mj=y%(48)===0;l.push(<line key={`h${y}`} x1={0} y1={y} x2={cW} y2={y} stroke={mj?"rgba(255,255,255,.35)":"rgba(255,255,255,.15)"} strokeWidth={mj?.7:.3}/>);}return l;},[cW,cH]);
@@ -434,13 +454,21 @@ export default function App(){
 
   const RulerY=()=>{const step=48,labels=[];for(let y=0;y<=cH;y+=step){const i=y/PX;const label=unit==="metric"?`${(i*2.54/100).toFixed(1)}m`:`${i/12}'`;const sy=y*zoom+pan.y;labels.push(<div key={y} style={{position:"absolute",top:sy,left:2,fontSize:9,color:"#1a1a1a",fontWeight:600,transform:"translateY(-50%)",whiteSpace:"nowrap"}}>{label}</div>);}return <div style={{position:"absolute",top:0,left:0,bottom:0,width:30,background:"rgba(250,248,245,.95)",borderRight:`1px solid ${T.hBorder}`,zIndex:20,pointerEvents:"none"}}>{labels}</div>;};
 
+<<<<<<< HEAD
   const renderBed=b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return null;const w=(b.wIn||bed.wIn)*PX,h2=(b.hIn||bed.hIn)*PX;const sel=selId===b.id;const isTrellis=bed.trellis;const dirtColor="rgb(50,30,10)";const st={position:"absolute",left:b.x,top:b.y,width:w,height:h2,border:`${sel?3:2}px ${bed.cat==="Grow Bag"?"dashed":isTrellis?"dotted":"solid"} ${sel?"#2b6cb0":bed.matBorder}`,backgroundColor:isTrellis?"rgba(139,115,85,.08)":dirtColor,cursor:drag?.id===b.id?"grabbing":"grab",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600,userSelect:"none",zIndex:sel?5:1,boxShadow:sel?"0 0 0 2px rgba(43,108,176,.3)":"none",textShadow:"0 1px 2px rgba(0,0,0,.4)"};
+=======
+  const renderBed=b=>{const bed=BED_PRESETS.find(bp=>bp.id===b.bid);if(!bed)return null;const w=(b.wIn||bed.wIn)*PX,h2=(b.hIn||bed.hIn)*PX;const sel=selId===b.id;const isTrellis=bed.trellis;const dirtColor="rgba(120,85,40,.65)";const st={position:"absolute",left:b.x,top:b.y,width:w,height:h2,border:`${sel?3:2}px ${bed.cat==="Grow Bag"?"dashed":isTrellis?"dotted":"solid"} ${sel?"#2b6cb0":bed.matBorder}`,backgroundColor:isTrellis?"rgba(139,115,85,.08)":dirtColor,cursor:drag?.id===b.id?"grabbing":"grab",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600,userSelect:"none",zIndex:sel?5:1,boxShadow:sel?"0 0 0 2px rgba(43,108,176,.3)":"none",textShadow:"0 1px 2px rgba(0,0,0,.4)"};
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
   if(bed.shape==="circle")st.borderRadius="50%";else if(bed.shape==="keyhole"){st.borderRadius="50%";st.clipPath="polygon(0% 0%,100% 0%,100% 100%,55% 100%,55% 65%,45% 65%,45% 100%,0% 100%)";}else st.borderRadius="3px";
   if(isTrellis){st.backgroundImage="repeating-linear-gradient(0deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px),repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(139,115,85,.15) 10px,rgba(139,115,85,.15) 11px)";}
   const dim=unit==="metric"?`${toM(b.wIn||bed.wIn)}×${toM(b.hIn||bed.hIn)}cm`:`${b.wIn||bed.wIn}″×${b.hIn||bed.hIn}″`;
   const handles=b.custom&&sel?["nw","ne","sw","se"].map(c=>{const isT=c[0]==="n",isL=c[1]==="w";return <div key={c} onMouseDown={e=>stR(e,b,c)} style={{position:"absolute",width:10,height:10,top:isT?-5:"auto",bottom:isT?"auto":-5,left:isL?-5:"auto",right:isL?"auto":-5,background:"#fff",border:"2px solid #2b6cb0",borderRadius:"50%",cursor:c==="nw"||c==="se"?"nwse-resize":"nesw-resize",zIndex:30}}/>;})
   :null;
+<<<<<<< HEAD
   return <div key={b.id} style={st} onMouseDown={e=>{if(activeTool?.type==="plant"){return;}sdb(e,b);}}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
+=======
+  return <div key={b.id} style={st} onMouseDown={e=>sdb(e,b)}><span style={{pointerEvents:"none",textAlign:"center",lineHeight:1.2}}>{bed.name}<br/>{dim}</span>{handles}</div>;};
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
 
   const InfoPanel=({plant:p,onClose})=>{ return (
     <div style={{position:"fixed",top:0,right:0,width:310,height:"100%",background:"#fff",boxShadow:"-4px 0 20px rgba(0,0,0,.1)",zIndex:1000,overflowY:"auto",borderLeft:"1px solid #ddd"}}>
@@ -545,6 +573,7 @@ export default function App(){
           {selId&&<div style={{position:"absolute",top:24,left:"50%",transform:"translateX(-50%)",zIndex:50,display:"flex",gap:4,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"4px 12px",boxShadow:"0 2px 10px rgba(0,0,0,.06)",alignItems:"center"}}><span style={{fontSize:10,color:T.textM,fontWeight:600}}>Press Backspace to delete or drag to 🗑</span></div>}
           {showTrash&&<div style={{position:"absolute",bottom:12,left:12,zIndex:50,width:96,height:96,borderRadius:16,background:trashH?"#fed7d7":"rgba(255,255,255,.9)",border:`2px dashed ${trashH?"#e53e3e":"#cbd5e0"}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",transition:"all .15s",transform:trashH?"scale(1.1)":"scale(1)"}}><span style={{fontSize:36}}>🗑</span><span style={{fontSize:10,color:trashH?"#e53e3e":"#999",fontWeight:700}}>Drop to delete</span></div>}
           <div style={{transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`,transformOrigin:"0 0",width:cW,height:cH,position:"relative",background:"linear-gradient(135deg,#8a9e5a 0%,#7d9450 15%,#95a86a 30%,#6d843f 45%,#8a9e5a 60%,#7a8f4d 75%,#92a565 90%,#6d843f 100%)",boxShadow:"0 1px 8px rgba(0,0,0,.08)"}}>
+<<<<<<< HEAD
             {/* Grid lines — behind everything */}
             <svg style={{position:"absolute",top:0,left:0,width:cW,height:cH,pointerEvents:"none",zIndex:0}}>{gridSVG}</svg>
             {/* Beds — pointer-events disabled when placing plants */}
@@ -557,6 +586,12 @@ export default function App(){
             </svg>
             {/* Plant icons — on top of everything */}
             {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;return <div key={pl.id} data-plant-id={pl.id} style={{position:"absolute",left:pl.x,top:pl.y,width:28,height:28,cursor:drag?.id===pl.id?"grabbing":"grab",zIndex:sel?20:10,filter:sel?"drop-shadow(0 0 3px #4299e1)":"drop-shadow(0 1px 2px rgba(0,0,0,.3))"}} onMouseDown={e=>sdp(e,pl)} title={p.name}><PlantSVG plant={p} size={28}/>{sel&&<div style={{position:"absolute",top:-16,left:-4,background:"#fff",border:"1px solid #ddd",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,whiteSpace:"nowrap",color:"#1a1a1a"}}>{p.name}</div>}</div>;})}
+=======
+            <svg style={{position:"absolute",top:0,left:0,width:cW,height:cH,pointerEvents:"none"}}>{gridSVG}
+              {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;const ov=overlapInfo.get(pl.id);const isComp=companionInfo.has(pl.id);const r=(p.spacingIn/2)*PX;const col=ov==="red"?"rgba(220,38,38,.12)":ov==="orange"?"rgba(237,137,54,.12)":isComp?"rgba(34,197,94,.15)":sel?"rgba(66,153,225,.12)":"rgba(255,255,255,.08)";const sc=ov==="red"?"#dc2626":ov==="orange"?"#ed8936":isComp?"#22c55e":sel?"#4299e1":"rgba(255,255,255,.3)";return <circle key={pl.id} cx={pl.x+14} cy={pl.y+14} r={r} fill={col} stroke={sc} strokeWidth={sel||ov||isComp?1.5:.6} strokeDasharray={sel||ov||isComp?"none":"4 2"}/>;})}</svg>
+            {beds.map(renderBed)}
+            {plants.map(pl=>{const p=PLANTS.find(x=>x.id===pl.pid);if(!p)return null;const sel=selId===pl.id;return <div key={pl.id} style={{position:"absolute",left:pl.x,top:pl.y,width:28,height:28,cursor:drag?.id===pl.id?"grabbing":"grab",zIndex:sel?20:10,filter:sel?"drop-shadow(0 0 3px #4299e1)":"drop-shadow(0 1px 2px rgba(0,0,0,.3))"}} onMouseDown={e=>sdp(e,pl)} title={p.name}><PlantSVG plant={p} size={28}/>{sel&&<div style={{position:"absolute",top:-16,left:-4,background:"#fff",border:"1px solid #ddd",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,whiteSpace:"nowrap",color:"#1a1a1a"}}>{p.name}</div>}</div>;})}
+>>>>>>> dd8acb7839354013c419658e380c2fb4d6d2bf3b
           </div>
 
           {/* CHAT */}
