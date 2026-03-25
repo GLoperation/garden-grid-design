@@ -491,7 +491,7 @@ export default function App(){
     e.target.value="";
   };
 
-  const sendChat=async()=>{if(!chatIn.trim()||chatBusy)return;const m=chatIn.trim();setChatIn("");setMsgs(p=>[...p,{role:"user",content:m}]);setChatBusy(true);try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...msgs.slice(-8),{role:"user",content:m}]})});const d=await r.json();if(d.error){setMsgs(p=>[...p,{role:"assistant",content:d.error}]);}else{setMsgs(p=>[...p,{role:"assistant",content:d.content?.map(c=>c.text||"").join("")||"Sorry, try again!"}]);}}catch{setMsgs(p=>[...p,{role:"assistant",content:"Connection issue. Please try again."}]);}setChatBusy(false);};
+  const sendChat=async()=>{if(!chatIn.trim()||chatBusy)return;const m=chatIn.trim();setChatIn("");setMsgs(p=>[...p,{role:"user",content:m}]);setChatBusy(true);try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"You are a friendly expert garden assistant for edible plants. Keep answers concise (2-4 sentences). Cover spacing, companions, pests, soil, watering, and design.",messages:[...msgs.slice(-8),{role:"user",content:m}]})});const d=await r.json();setMsgs(p=>[...p,{role:"assistant",content:d.content?.map(c=>c.text||"").join("")||"Sorry, try again!"}]);}catch{setMsgs(p=>[...p,{role:"assistant",content:"Connection issue. Please try again."}]);}setChatBusy(false);};
 
   // Overlap & companion detection — green when companion circles touch, orange/red for bad overlaps
   const plantRelations=useMemo(()=>{
