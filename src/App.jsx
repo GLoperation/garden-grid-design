@@ -276,25 +276,29 @@ const CATS=["All","Fruiting","Leafy","Brassica","Root","Allium","Legume","Herb",
 const BCATS=["Raised Wood","Raised Metal","Container","Grow Bag","In-Ground","Keyhole","Trellis"];
 
 export default function App(){
-  const[projectName,setProjectName]=useState("My Garden Plan");
-  const[usdaZone,setUsdaZone]=useState("");
-  const[unit,setUnit]=useState("imperial");
-  const[zoom,setZoom]=useState(.75);
-  const[pan,setPan]=useState({x:40,y:40});
-  const[canvasSize,setCanvasSize]=useState({w:240,h:240});
+  // Load saved state from localStorage
+  const loadSaved=()=>{try{const s=localStorage.getItem("ggd_save");if(s){const d=JSON.parse(s);return d;}}catch{}return null;};
+  const saved=useRef(loadSaved());
+
+  const[projectName,setProjectName]=useState(saved.current?.projectName||"My Garden Plan");
+  const[usdaZone,setUsdaZone]=useState(saved.current?.usdaZone||"");
+  const[unit,setUnit]=useState(saved.current?.unit||"imperial");
+  const[zoom,setZoom]=useState(saved.current?.zoom||.75);
+  const[pan,setPan]=useState(saved.current?.pan||{x:40,y:40});
+  const[canvasSize,setCanvasSize]=useState(saved.current?.canvasSize||{w:240,h:240});
   const[searchQ,setSearchQ]=useState("");
   const[plantCat,setPlantCat]=useState("All");
   const[bedCat,setBedCat]=useState("Raised Wood");
   const[sideTab,setSideTab]=useState("plants");
   const[activeTool,setActiveTool]=useState(null);
-  const[plants,setPlants]=useState([]);
-  const[beds,setBeds]=useState([]);
+  const[plants,setPlants]=useState(saved.current?.plants||[]);
+  const[beds,setBeds]=useState(saved.current?.beds||[]);
   const[selId,setSelId]=useState(null);
   const[drag,setDrag]=useState(null);
   const[dragS,setDragS]=useState(null);
   const[isPan,setIsPan]=useState(false);
   const[panS,setPanS]=useState(null);
-  const[notes,setNotes]=useState("");
+  const[notes,setNotes]=useState(saved.current?.notes||"");
   const[chatOpen,setChatOpen]=useState(false);
   const[chatMode,setChatMode]=useState("ai");
   const[fbName,setFbName]=useState("");
@@ -310,6 +314,23 @@ export default function App(){
   const[showCS,setShowCS]=useState(false);
   const[notesC,setNotesC]=useState(false);
   const[showTrash,setShowTrash]=useState(false);
+
+  // Auto-save to localStorage (debounced)
+  const saveTimer=useRef(null);
+  useEffect(()=>{
+    if(saveTimer.current)clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(()=>{
+      try{localStorage.setItem("ggd_save",JSON.stringify({projectName,usdaZone,unit,zoom,pan,canvasSize,plants,beds,notes}));}catch{}
+    },500);
+  },[projectName,usdaZone,unit,zoom,pan,canvasSize,plants,beds,notes]);
+
+  // 3. Reset garden
+  const resetGarden=()=>{
+    if(!window.confirm("Reset your entire garden? This clears all plants, beds, and notes. This cannot be undone."))return;
+    setProjectName("My Garden Plan");setUsdaZone("");setUnit("imperial");setZoom(.75);setPan({x:40,y:40});
+    setCanvasSize({w:240,h:240});setPlants([]);setBeds([]);setNotes("");setSelId(null);setActiveTool(null);
+    try{localStorage.removeItem("ggd_save");}catch{}
+  };
   const[trashH,setTrashH]=useState(false);
   const[resH,setResH]=useState(null);
   const wr=useRef(null),ce=useRef(null),cb=useRef(null),chatRef=useRef(null);
@@ -695,6 +716,9 @@ export default function App(){
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 9V1M7 1L4 4M7 1l3 3M2 12h10" stroke={T.text} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
         <input ref={fileRef} type="file" accept=".json,.ggd.json" onChange={loadProject} style={{display:"none"}}/>
+        <button onClick={resetGarden} title="Reset garden" style={{width:28,height:28,border:"1px solid #fed7d7",borderRadius:4,background:"#fff5f5",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="#e53e3e" strokeWidth="1.5" strokeLinecap="round"/></svg>
+        </button>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:6}}>
         <select value={usdaZone} onChange={e=>setUsdaZone(e.target.value)} style={{padding:"4px 6px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:10,fontWeight:700,background:usdaZone?T.accentL:"#fff",color:T.text,cursor:"pointer",outline:"none"}}>
