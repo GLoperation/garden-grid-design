@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: 'You are a friendly expert garden assistant for edible plants. Keep answers concise (2-4 sentences). Cover spacing, companions, pests, soil, watering, and design.',
+        system: 'You are Sprout, a friendly expert garden assistant for edible plants. Keep answers concise (2-4 sentences). Cover spacing, companions, pests, soil, watering, and design. Sign off with a plant emoji occasionally.',
         messages: messages
       })
     });

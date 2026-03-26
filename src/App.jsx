@@ -307,7 +307,7 @@ export default function App(){
   const[fbMsg,setFbMsg]=useState("");
   const[fbSending,setFbSending]=useState(false);
   const[fbSent,setFbSent]=useState(false);
-  const[msgs,setMsgs]=useState([{role:"assistant",content:"Hi! I'm your garden assistant. Ask about spacing, companions, soil, pests, or design!"}]);
+  const[msgs,setMsgs]=useState([{role:"assistant",content:"Hey! I'm Sprout 🌱 your garden assistant. Ask me about spacing, companions, soil, pests, or design!"}]);
   const[chatIn,setChatIn]=useState("");
   const[chatBusy,setChatBusy]=useState(false);
   const[pInfo,setPInfo]=useState(null);
@@ -798,7 +798,7 @@ export default function App(){
             {chatOpen&&<div style={{position:"absolute",bottom:52,right:0,width:300,height:380,background:"#fff",border:`1px solid ${T.border}`,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.1)",display:"flex",flexDirection:"column",overflow:"hidden"}} onWheel={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
               {/* Tab header */}
               <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-                <button onClick={()=>setChatMode("ai")} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:chatMode==="ai"?T.accentL:"#fff",color:chatMode==="ai"?T.accentD:T.textL,borderBottom:chatMode==="ai"?`2px solid ${T.accent}`:"2px solid transparent"}}>🌱 AI Assistant</button>
+                <button onClick={()=>setChatMode("ai")} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:chatMode==="ai"?T.accentL:"#fff",color:chatMode==="ai"?T.accentD:T.textL,borderBottom:chatMode==="ai"?`2px solid ${T.accent}`:"2px solid transparent"}}>🌱 Sprout</button>
                 <button onClick={()=>setChatMode("feedback")} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:chatMode==="feedback"?"#fff5f0":"#fff",color:chatMode==="feedback"?"#c53030":T.textL,borderBottom:chatMode==="feedback"?"2px solid #ed8936":"2px solid transparent"}}>📩 Feedback</button>
                 <button onClick={e=>{e.stopPropagation();setChatOpen(false);}} style={{width:32,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#999",flexShrink:0}}>✕</button>
               </div>
