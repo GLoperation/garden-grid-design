@@ -296,6 +296,13 @@ export default function App(){
   const[panS,setPanS]=useState(null);
   const[notes,setNotes]=useState("");
   const[chatOpen,setChatOpen]=useState(false);
+  const[chatMode,setChatMode]=useState("ai");
+  const[fbName,setFbName]=useState("");
+  const[fbEmail,setFbEmail]=useState("");
+  const[fbCat,setFbCat]=useState("General Question");
+  const[fbMsg,setFbMsg]=useState("");
+  const[fbSending,setFbSending]=useState(false);
+  const[fbSent,setFbSent]=useState(false);
   const[msgs,setMsgs]=useState([{role:"assistant",content:"Hi! I'm your garden assistant. Ask about spacing, companions, soil, pests, or design!"}]);
   const[chatIn,setChatIn]=useState("");
   const[chatBusy,setChatBusy]=useState(false);
@@ -493,6 +500,29 @@ export default function App(){
 
   const sendChat=async()=>{if(!chatIn.trim()||chatBusy)return;const m=chatIn.trim();setChatIn("");setMsgs(p=>[...p,{role:"user",content:m}]);setChatBusy(true);try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"You are a friendly expert garden assistant for edible plants. Keep answers concise (2-4 sentences). Cover spacing, companions, pests, soil, watering, and design.",messages:[...msgs.slice(-8),{role:"user",content:m}]})});const d=await r.json();setMsgs(p=>[...p,{role:"assistant",content:d.content?.map(c=>c.text||"").join("")||"Sorry, try again!"}]);}catch{setMsgs(p=>[...p,{role:"assistant",content:"Connection issue. Please try again."}]);}setChatBusy(false);};
 
+  const sendFeedback=async()=>{
+    if(!fbMsg.trim()||fbSending)return;
+    setFbSending(true);
+    try{
+      const r=await fetch("https://api.web3forms.com/submit",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          access_key:"57592aea-538d-4ac5-8ad2-d3f51f248631",
+          subject:`GardenGridDesign — ${fbCat}`,
+          from_name:fbName||"Anonymous User",
+          email:fbEmail||"no-reply@gardengriddesign.com",
+          category:fbCat,
+          message:fbMsg,
+          source:"GardenGridDesign App"
+        })
+      });
+      const d=await r.json();
+      if(d.success){setFbSent(true);setFbMsg("");setFbName("");setFbEmail("");setTimeout(()=>setFbSent(false),4000);}
+      else{alert("Failed to send. Please try again.");}
+    }catch{alert("Connection error. Please try again.");}
+    setFbSending(false);
+  };
+
   // Overlap & companion detection — green when companion circles touch, orange/red for bad overlaps
   const plantRelations=useMemo(()=>{
     const m=new Map();
@@ -609,6 +639,38 @@ export default function App(){
             <div style={{fontSize:12,color:"#1a1a1a",lineHeight:1.5}}>{p.tip}</div>
           </div>
         )}
+        {(() => {
+          const AFF="gardengriddes-20";
+          const name=p.name.split("(")[0].trim();
+          const seedQ=encodeURIComponent(name+" seeds");
+          const suppQ=encodeURIComponent(name+" plant");
+          const fertQ=encodeURIComponent(name+" fertilizer");
+          const linkStyle={display:"block",padding:"8px 10px",borderRadius:6,fontSize:11,fontWeight:600,color:"#1a1a1a",textDecoration:"none",background:"#faf8f5",border:"1px solid #e0d8cf",marginBottom:4,textAlign:"center"};
+          return (
+            <div style={{marginTop:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#3d5a32",marginBottom:6}}>🛒 Shop on Amazon</div>
+              <a href={`https://www.amazon.com/s?k=${seedQ}&tag=${AFF}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                🌰 {name} Seeds
+              </a>
+              {p.cat==="Trees" ? (
+                <a href={`https://www.amazon.com/s?k=${encodeURIComponent(name+" live plant")}&tag=${AFF}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                  🌱 Live {name} Plant
+                </a>
+              ) : (
+                <a href={`https://www.amazon.com/s?k=${suppQ}&tag=${AFF}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                  🌱 {name} Starter Plants
+                </a>
+              )}
+              <a href={`https://www.amazon.com/s?k=${fertQ}&tag=${AFF}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                🧪 {name} Fertilizer
+              </a>
+              <a href={`https://www.amazon.com/s?k=${encodeURIComponent("garden soil compost")}&tag=${AFF}`} target="_blank" rel="noopener noreferrer" style={{...linkStyle,marginBottom:0}}>
+                🪴 Soil & Compost
+              </a>
+              <div style={{fontSize:9,color:"#999",marginTop:6,textAlign:"center"}}>As an Amazon Associate we earn from qualifying purchases</div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   ); };
@@ -709,10 +771,58 @@ export default function App(){
 
           {/* CHAT */}
           <div ref={chatRef} className="noc" style={{position:"absolute",bottom:12,right:12,zIndex:80}}>
-            {chatOpen&&<div style={{position:"absolute",bottom:52,right:0,width:290,height:340,background:"#fff",border:`1px solid ${T.border}`,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.1)",display:"flex",flexDirection:"column",overflow:"hidden"}} onWheel={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
-              <div style={{padding:"7px 12px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.accentL,flexShrink:0}}><span style={{fontWeight:700,fontSize:11,color:T.accentD}}>🌱 Garden Assistant</span><button onClick={e=>{e.stopPropagation();setChatOpen(false);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#999"}}>✕</button></div>
-              <div ref={cb} style={{flex:1,overflowY:"auto",padding:8}} onWheel={e=>e.stopPropagation()}>{msgs.map((m,i)=><div key={i} style={{marginBottom:6,display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}><div style={{maxWidth:"85%",padding:"5px 9px",borderRadius:8,fontSize:11,lineHeight:1.4,background:m.role==="user"?T.accent:"#f5f0eb",color:m.role==="user"?"#fff":"#1a1a1a",border:m.role==="user"?"none":`1px solid ${T.border}`}}>{m.content}</div></div>)}{chatBusy&&<div style={{fontSize:11,color:"#bbb",padding:4}}>Thinking...</div>}<div ref={ce}/></div>
-              <div style={{padding:6,borderTop:`1px solid ${T.border}`,display:"flex",gap:4,flexShrink:0}}><input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();sendChat();}}} onMouseDown={e=>e.stopPropagation()} placeholder="Ask about gardening..." style={{flex:1,padding:"5px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,outline:"none",color:T.text}}/><button onClick={e=>{e.stopPropagation();sendChat();}} onMouseDown={e=>e.stopPropagation()} disabled={chatBusy} style={{padding:"5px 10px",background:T.accent,color:"#fff",border:"none",borderRadius:5,cursor:"pointer",fontSize:11,fontWeight:700,opacity:chatBusy?.5:1}}>↑</button></div>
+            {chatOpen&&<div style={{position:"absolute",bottom:52,right:0,width:300,height:380,background:"#fff",border:`1px solid ${T.border}`,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.1)",display:"flex",flexDirection:"column",overflow:"hidden"}} onWheel={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
+              {/* Tab header */}
+              <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+                <button onClick={()=>setChatMode("ai")} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:chatMode==="ai"?T.accentL:"#fff",color:chatMode==="ai"?T.accentD:T.textL,borderBottom:chatMode==="ai"?`2px solid ${T.accent}`:"2px solid transparent"}}>🌱 AI Assistant</button>
+                <button onClick={()=>setChatMode("feedback")} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:chatMode==="feedback"?"#fff5f0":"#fff",color:chatMode==="feedback"?"#c53030":T.textL,borderBottom:chatMode==="feedback"?"2px solid #ed8936":"2px solid transparent"}}>📩 Feedback</button>
+                <button onClick={e=>{e.stopPropagation();setChatOpen(false);}} style={{width:32,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#999",flexShrink:0}}>✕</button>
+              </div>
+
+              {chatMode==="ai" ? (
+                <React.Fragment>
+                  <div ref={cb} style={{flex:1,overflowY:"auto",padding:8}} onWheel={e=>e.stopPropagation()}>
+                    {msgs.map((m,i)=>(
+                      <div key={i} style={{marginBottom:6,display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                        <div style={{maxWidth:"85%",padding:"5px 9px",borderRadius:8,fontSize:11,lineHeight:1.4,background:m.role==="user"?T.accent:"#f5f0eb",color:m.role==="user"?"#fff":"#1a1a1a",border:m.role==="user"?"none":`1px solid ${T.border}`}}>{m.content}</div>
+                      </div>
+                    ))}
+                    {chatBusy&&<div style={{fontSize:11,color:"#bbb",padding:4}}>Thinking...</div>}
+                    <div ref={ce}/>
+                  </div>
+                  <div style={{padding:6,borderTop:`1px solid ${T.border}`,display:"flex",gap:4,flexShrink:0}}>
+                    <input value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();sendChat();}}} onMouseDown={e=>e.stopPropagation()} placeholder="Ask about gardening..." style={{flex:1,padding:"5px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,outline:"none",color:T.text}}/>
+                    <button onClick={e=>{e.stopPropagation();sendChat();}} onMouseDown={e=>e.stopPropagation()} disabled={chatBusy} style={{padding:"5px 10px",background:T.accent,color:"#fff",border:"none",borderRadius:5,cursor:"pointer",fontSize:11,fontWeight:700,opacity:chatBusy?.5:1}}>↑</button>
+                  </div>
+                </React.Fragment>
+              ) : (
+                <div style={{flex:1,overflowY:"auto",padding:12}} onWheel={e=>e.stopPropagation()}>
+                  {fbSent ? (
+                    <div style={{textAlign:"center",padding:"40px 16px"}}>
+                      <div style={{fontSize:32,marginBottom:8}}>✅</div>
+                      <div style={{fontSize:14,fontWeight:700,color:T.accentD,marginBottom:4}}>Message Sent!</div>
+                      <div style={{fontSize:12,color:T.textM}}>Thank you for your feedback. We'll get back to you soon.</div>
+                    </div>
+                  ) : (
+                    <React.Fragment>
+                      <div style={{fontSize:12,fontWeight:600,color:T.text,marginBottom:8}}>Send us a message</div>
+                      <select value={fbCat} onChange={e=>setFbCat(e.target.value)} onMouseDown={e=>e.stopPropagation()} style={{width:"100%",padding:"6px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,marginBottom:6,outline:"none",color:T.text,background:"#fff"}}>
+                        <option>General Question</option>
+                        <option>Bug Report</option>
+                        <option>Feature Request</option>
+                        <option>Partnership Inquiry</option>
+                        <option>Gardening Help</option>
+                      </select>
+                      <input value={fbName} onChange={e=>setFbName(e.target.value)} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} placeholder="Name (optional)" style={{width:"100%",padding:"6px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,marginBottom:6,outline:"none",color:T.text,boxSizing:"border-box"}}/>
+                      <input value={fbEmail} onChange={e=>setFbEmail(e.target.value)} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} placeholder="Email (optional, for reply)" style={{width:"100%",padding:"6px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,marginBottom:6,outline:"none",color:T.text,boxSizing:"border-box"}}/>
+                      <textarea value={fbMsg} onChange={e=>setFbMsg(e.target.value)} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} placeholder="Your message..." style={{width:"100%",height:80,padding:"6px 8px",border:`1px solid ${T.border}`,borderRadius:5,fontSize:11,outline:"none",resize:"none",fontFamily:"inherit",color:T.text,boxSizing:"border-box"}}/>
+                      <button onClick={sendFeedback} disabled={fbSending||!fbMsg.trim()} style={{width:"100%",padding:"8px",background:fbMsg.trim()?T.accent:"#ccc",color:"#fff",border:"none",borderRadius:5,cursor:fbMsg.trim()?"pointer":"default",fontSize:12,fontWeight:700,marginTop:6,opacity:fbSending?.6:1}}>
+                        {fbSending?"Sending...":"Send Message"}
+                      </button>
+                    </React.Fragment>
+                  )}
+                </div>
+              )}
             </div>}
             <button onClick={e=>{e.stopPropagation();setChatOpen(o=>!o);}} onMouseDown={e=>e.stopPropagation()} style={{width:44,height:44,borderRadius:"50%",background:T.accent,color:"#fff",border:"none",cursor:"pointer",boxShadow:`0 2px 12px ${T.accent}50`,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{chatOpen?"✕":"💬"}</button>
           </div>
