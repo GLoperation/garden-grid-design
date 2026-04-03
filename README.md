@@ -1,3 +1,3 @@
-# 🌱 GardenGridDesign — Deployment Guide
+# 🌱 GardenGridDesign 
 
 A fully interactive garden planning app. 

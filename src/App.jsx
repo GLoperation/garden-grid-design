@@ -172,6 +172,20 @@ const PLANTS = [
   { id:"fennel_bulb",name:"Florence Fennel (Bulb)",cat:"Other",spacingIn:10,sun:"Full",water:"Regular",days:"60–90",depth:"¼″",season:"Cool",heightIn:24,zones:[4,10],sow:"direct",companions:[],avoid:["Most plants"],color:"#c6f6d5",icon:"leek",tip:"Direct sow — bolts if transplanted. KEEP ISOLATED from other plants (allelopathic). Sweet anise-flavored bulb. Hill soil around bulb as it swells for blanching. Harvest when bulb is 3+ inches. Orion is bolt-resistant. Excellent raw in salads, roasted, or braised. Fronds are edible too." },
   { id:"sunflower",name:"Sunflower (Edible)",cat:"Other",spacingIn:24,sun:"Full",water:"Moderate",days:"70–100",depth:"1″",season:"Warm",heightIn:96,zones:[3,11],sow:"direct",companions:["Corn","Squash"],avoid:["Potato"],color:"#ecc94b",icon:"dill",tip:"MUST direct sow. Mammoth Russian grows 10+ feet. Harvest seeds when back of head turns brown and seeds are plump. Cut head and hang upside down in paper bag to dry. Roast at 300°F for 30 min. Sunflower sprouts/microgreens are also edible and nutritious." },
   { id:"microgreens",name:"Microgreens Tray",cat:"Other",spacingIn:12,sun:"Partial",water:"Regular",days:"7–14",depth:"Surface",season:"Any",heightIn:3,zones:[1,13],sow:"direct",companions:[],avoid:[],color:"#48bb78",icon:"arugula",tip:"Direct sow densely on soil or mat. Harvest at 1–2 inches with scissors (7–14 days). Up to 40x more nutrients than mature plants. Sunflower, pea, and radish microgreens are best for beginners. No garden needed — grow on a windowsill year-round. Great income crop — sells for $25–50/lb at farmers markets." },
+  // ── COMPANION / SUPPORT PLANTS ──
+  { id:"marigold",name:"Marigold (French)",cat:"Companion",spacingIn:10,sun:"Full",water:"Moderate",days:"50–65",depth:"¼″",season:"Warm",heightIn:12,zones:[2,11],sow:"both",companions:["Tomato","Pepper","Eggplant","Bean","Squash","Cucumber"],avoid:[],color:"#ed8936",icon:"dill",tip:"THE #1 companion plant. French marigolds release thiopene from roots that repels nematodes, whiteflies, and aphids. Plant as a border around vegetable beds. Signet marigolds (Gem series) have edible citrusy petals for salads. Deadhead for continuous blooms. Let some go to seed — they self-sow reliably." },
+  { id:"marigold_african",name:"Marigold (African/Tall)",cat:"Companion",spacingIn:18,sun:"Full",water:"Moderate",days:"60–75",depth:"¼″",season:"Warm",heightIn:30,zones:[2,11],sow:"both",companions:["Tomato","Squash","Cucumber"],avoid:[],color:"#dd6b20",icon:"dill",tip:"Larger pom-pom flowers on tall stems (2–3 feet). Same pest-repelling benefits as French marigolds but bigger visual impact. Crackerjack mix is classic. Excellent for cut flowers. Roots release a chemical that kills root-knot nematodes — plant where you had nematode problems." },
+  { id:"nasturtium",name:"Nasturtium",cat:"Companion",spacingIn:12,sun:"Full",water:"Moderate",days:"35–50",depth:"½″",season:"Warm",heightIn:12,zones:[2,11],sow:"direct",companions:["Tomato","Cucumber","Squash","Bean","Cabbage"],avoid:[],color:"#ed8936",icon:"squash",tip:"TRAP CROP — attracts aphids and flea beetles AWAY from your vegetables. Plant near brassicas and cucurbits. Entire plant is edible — peppery flowers, leaves, and pickled seed pods (poor man's capers). Trailing types make great ground cover. Alaska series has variegated leaves. Direct sow after frost — doesn't transplant well." },
+  { id:"borage",name:"Borage",cat:"Companion",spacingIn:18,sun:"Full",water:"Moderate",days:"50–60",depth:"½″",season:"Cool",heightIn:24,zones:[2,11],sow:"direct",companions:["Tomato","Strawberry","Squash"],avoid:[],color:"#4c51bf",icon:"dill",tip:"Top pollinator attractor with star-shaped blue flowers that bees absolutely love. Companion to tomatoes and strawberries — may improve their flavor. Edible flowers taste like cucumber — freeze in ice cubes for drinks. Self-seeds prolifically. Leaves are hairy and coarse. One of the best plants for attracting beneficial insects to your garden." },
+  { id:"tansy",name:"Tansy",cat:"Companion",spacingIn:18,sun:"Full",water:"Low",days:"Perennial",depth:"Surface",season:"Cool",heightIn:36,zones:[3,9],sow:"both",companions:["Raspberry","Blackberry","Grape","Fruit Trees"],avoid:[],color:"#ecc94b",icon:"dill",tip:"Powerful insect repellent — deters Japanese beetles, squash bugs, ants, and flies. Plant near fruit trees, berries, and squash. WARNING: spreads aggressively by roots — contain it. Toxic if consumed in large quantities (do not eat). Yellow button flowers dry well. Cut back hard to prevent seeding." },
+  { id:"yarrow",name:"Yarrow",cat:"Companion",spacingIn:18,sun:"Full",water:"Low",days:"Perennial",depth:"Surface",season:"Cool",heightIn:30,zones:[3,10],sow:"both",companions:["Most vegetables"],avoid:[],color:"#fefcbf",icon:"dill",tip:"Beneficial insect magnet — attracts ladybugs, lacewings, hoverflies, and parasitic wasps that eat garden pests. Drought tolerant perennial. Accumulates potassium, calcium, and magnesium — adds nutrients to compost. Plant at garden edges. Achillea millefolium is the species you want." },
+  { id:"sweet_alyssum",name:"Sweet Alyssum",cat:"Companion",spacingIn:8,sun:"Full",water:"Moderate",days:"40–55",depth:"Surface",season:"Cool",heightIn:6,zones:[2,11],sow:"direct",companions:["Brassica","Lettuce","Potato"],avoid:[],color:"#fefcbf",icon:"lettuce",tip:"Low-growing ground cover that attracts hoverflies and parasitic wasps — natural aphid control. Plant as a living mulch under and between vegetable plants. Tiny fragrant white or purple flowers bloom non-stop. Self-seeds readily. One of the best ground-level beneficial insect habitats." },
+  { id:"bee_balm",name:"Bee Balm",cat:"Companion",spacingIn:18,sun:"Full",water:"Regular",days:"Perennial",depth:"Surface",season:"Warm",heightIn:36,zones:[3,9],sow:"transplant",companions:["Tomato","Pepper","Squash"],avoid:[],color:"#e53e3e",icon:"dill",tip:"Irresistible to bees, butterflies, and hummingbirds. Dramatically improves pollination of nearby vegetables. Monarda didyma — also makes excellent tea (Oswego tea). Plant near squash and cucumbers that need pollinators. Powdery mildew resistant varieties: Jacob Cline, Raspberry Wine." },
+  { id:"comfrey",name:"Comfrey",cat:"Companion",spacingIn:36,sun:"Partial",water:"Regular",days:"Perennial",depth:"Root cutting",season:"Cool",heightIn:48,zones:[3,9],sow:"transplant",companions:["Fruit Trees","Berry Bushes"],avoid:[],color:"#48bb78",icon:"kale",tip:"The ultimate garden support plant. Deep taproot mines minerals from subsoil. Cut leaves 3–4 times per season and use as: mulch (nutrient-rich), compost activator, or liquid fertilizer (soak leaves in water 4–6 weeks). Bocking 14 variety is sterile (won't spread). Plant under fruit trees. Do not eat — for garden use only." },
+  { id:"clover_crimson",name:"Crimson Clover",cat:"Companion",spacingIn:4,sun:"Full",water:"Moderate",days:"60–70",depth:"¼″",season:"Cool",heightIn:18,zones:[3,11],sow:"direct",companions:["All vegetables"],avoid:[],color:"#e53e3e",icon:"arugula",tip:"Nitrogen-fixing cover crop — takes nitrogen from air and stores it in root nodules for your next crop. Sow in fall after clearing summer beds. Beautiful crimson flower spikes in spring attract pollinators. Cut and turn into soil 2–3 weeks before spring planting. Also prevents erosion and suppresses weeds over winter." },
+  { id:"white_clover",name:"White Clover (Living Mulch)",cat:"Companion",spacingIn:4,sun:"Full",water:"Moderate",days:"Perennial",depth:"Surface",season:"Cool",heightIn:6,zones:[3,10],sow:"direct",companions:["Fruit Trees","Brassica","Corn"],avoid:[],color:"#fefcbf",icon:"arugula",tip:"Low-growing nitrogen-fixing living mulch. Sow between garden rows or under fruit trees. Fixes 100+ lbs nitrogen per acre. Suppresses weeds, prevents erosion, stays green, and feeds the soil. Dutch white clover stays shortest. Mow occasionally if it gets too tall. Attracts beneficial insects." },
+  { id:"daylily_edible",name:"Daylily (Edible)",cat:"Companion",spacingIn:18,sun:"Full",water:"Moderate",days:"Perennial",depth:"Crown",season:"Warm",heightIn:24,zones:[3,10],sow:"transplant",companions:["Most vegetables"],avoid:[],color:"#ed8936",icon:"dill",tip:"Every part is edible — flower buds (taste like green beans), open flowers (sweet, stuff with cheese), and tubers (nutty, like water chestnuts). Hemerocallis fulva (common orange daylily) is the edible species — NOT Asiatic lilies which are toxic. Plant as garden borders. Tough and drought tolerant once established." },
+  { id:"lemon_balm",name:"Lemon Balm",cat:"Companion",spacingIn:18,sun:"Partial",water:"Regular",days:"60–70",depth:"Surface",season:"Cool",heightIn:24,zones:[3,9],sow:"both",companions:["Tomato","Squash","Brassica"],avoid:[],color:"#9ae6b4",icon:"mint",tip:"Attracts pollinators while repelling mosquitoes and squash bugs. Makes wonderful calming tea. Lemon scent when leaves are crushed. Mint family — WILL SPREAD aggressively, contain in pot or dedicated area. Harvest frequently to prevent flowering and self-seeding. Rub leaves on skin as natural mosquito repellent." },
 ];
 /* ═══════════════════════════════════════════════════════════════
    BED PRESETS + custom + trellis
@@ -272,7 +286,7 @@ const PlantSVG = ({ plant, size = 28 }) => {
 const PX=4, GP=24, uid=()=>Math.random().toString(36).slice(2,10), toM=i=>(i*2.54).toFixed(1), snap=px=>Math.round(px/GP)*GP;
 const toFtIn=(inches)=>{const ft=Math.floor(inches/12);const inn=inches%12;return ft>0?(inn>0?`${ft}' ${inn}"`:ft+"'"):inn+"\"";};
 const USDA_ZONES=["1","2","3","4","5","6","7","8","9","10","11","12","13"];
-const CATS=["All","Fruiting","Leafy","Brassica","Root","Allium","Legume","Herb","Fruit","Trees","Other"];
+const CATS=["All","Fruiting","Leafy","Brassica","Root","Allium","Legume","Herb","Fruit","Trees","Companion","Other"];
 const BCATS=["Raised Wood","Raised Metal","Container","Grow Bag","In-Ground","Keyhole","Trellis"];
 
 export default function App(){
@@ -314,6 +328,7 @@ export default function App(){
   const[showCS,setShowCS]=useState(false);
   const[notesC,setNotesC]=useState(false);
   const[showTrash,setShowTrash]=useState(false);
+  const[showLanding,setShowLanding]=useState(false);
 
   // Auto-save to localStorage (debounced)
   const saveTimer=useRef(null);
@@ -696,8 +711,89 @@ export default function App(){
     </div>
   ); };
 
+  const LandingPage=()=>(
+    <div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",background:"#faf8f5",zIndex:2000,overflowY:"auto",fontFamily:"'DM Sans',system-ui,sans-serif",color:"#1a1a1a"}}>
+      {/* Domain for sale banner */}
+      <div style={{background:"#276749",color:"#fff",textAlign:"center",padding:"8px 16px",fontSize:12,fontWeight:700,letterSpacing:".5px"}}>
+        🏷️ This Domain Is For Sale — <a href="mailto:contact@gardengriddesign.com" style={{color:"#9ae6b4",textDecoration:"underline"}}>Contact Us</a>
+      </div>
+      {/* Nav */}
+      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 32px",maxWidth:1100,margin:"0 auto"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <svg width="32" height="32" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10" fill="#6b8f5e"/><path d="M11 4 Q7 8 8 14 Q11 11 14 14 Q15 8 11 4Z" fill="#fff"/></svg>
+          <span style={{fontSize:20,fontWeight:800,color:"#6b8f5e"}}>GardenGridDesign</span>
+        </div>
+        <button onClick={()=>setShowLanding(false)} style={{padding:"10px 24px",background:"#6b8f5e",color:"#fff",border:"none",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(107,143,94,.3)"}}>Open Garden Planner →</button>
+      </nav>
+      {/* Hero */}
+      <section style={{textAlign:"center",padding:"48px 24px 32px",maxWidth:800,margin:"0 auto"}}>
+        <h1 style={{fontSize:"clamp(28px,5vw,48px)",fontWeight:800,lineHeight:1.2,marginBottom:16,color:"#1a1a1a"}}>Design Your Edible Garden <span style={{color:"#6b8f5e"}}>With Confidence</span></h1>
+        <p style={{fontSize:"clamp(14px,2vw,18px)",color:"#555",lineHeight:1.6,maxWidth:600,margin:"0 auto 32px"}}>Free drag-and-drop garden planner with 140+ vegetables, fruits, herbs, and companion plants. Real spacing data, USDA zone filtering, companion planting detection, and an AI garden assistant — all in your browser.</p>
+        <button onClick={()=>setShowLanding(false)} style={{padding:"14px 36px",background:"#6b8f5e",color:"#fff",border:"none",borderRadius:10,fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(107,143,94,.3)",marginBottom:8}}>Start Planning — It's Free</button>
+        <p style={{fontSize:11,color:"#999"}}>No signup required. Works on desktop, tablet, and mobile.</p>
+      </section>
+      {/* Features */}
+      <section style={{padding:"32px 24px",maxWidth:1000,margin:"0 auto"}}>
+        <h2 style={{textAlign:"center",fontSize:24,fontWeight:700,marginBottom:32,color:"#1a1a1a"}}>Everything You Need to Plan Your Garden</h2>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>
+          {[
+            ["🌱","140+ Edible Plants","Complete database of vegetables, fruits, herbs, and companion plants with real spacing, sun, water, height, sow method, and harvest data."],
+            ["📐","True-to-Scale Design","6-inch snap grid with feet/inches or metric. Raised beds, metal beds, containers, grow bags, in-ground rows, keyhole beds, and trellises — all to scale."],
+            ["🗺️","USDA Zone Filtering","Select your hardiness zone and instantly see which plants thrive in your area. Out-of-zone plants are clearly marked."],
+            ["💚","Companion Planting","Spacing circles turn green when companion plants are near each other, orange and red when plants are too close. Real companion data for every plant."],
+            ["🤖","AI Garden Assistant","Ask Sprout anything about spacing, soil, pests, watering, or garden design. Powered by AI, built right into the planner."],
+            ["📱","Works Everywhere","Full touch support with pinch-to-zoom on mobile and tablet. Drag and drop plants and beds on any device."],
+            ["💾","Save & Export","Auto-saves your progress. Download as a project file to share or reload later. Export as PNG for printing."],
+            ["🌰","Sow & Grow Guides","Every plant includes detailed growing tips, whether to transplant or direct sow, planting depth, and in-depth specialty advice."],
+          ].map(([icon,title,desc],i)=>(
+            <article key={i} style={{padding:20,background:"#fff",borderRadius:12,border:"1px solid #e0d8cf",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
+              <div style={{fontSize:28,marginBottom:8}}>{icon}</div>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:6,color:"#1a1a1a"}}>{title}</h3>
+              <p style={{fontSize:13,color:"#555",lineHeight:1.5}}>{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      {/* How to use */}
+      <section style={{padding:"32px 24px 40px",maxWidth:800,margin:"0 auto"}}>
+        <h2 style={{textAlign:"center",fontSize:24,fontWeight:700,marginBottom:24,color:"#1a1a1a"}}>How to Use GardenGridDesign</h2>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {[
+            ["1️⃣","Choose your beds","Click the Beds tab, pick a bed type (raised, container, grow bag, in-ground, or trellis), then click the canvas to place it. Use custom beds and drag the corner or edge handles to resize."],
+            ["2️⃣","Add your plants","Click the Plants tab, search or browse by category, then click inside a bed to place. Spacing circles show you exactly how much room each plant needs."],
+            ["3️⃣","Check companions","Green circles mean companion plants are helping each other. Orange or red means they're too close. Use the info panel to see full companion and avoid lists."],
+            ["4️⃣","Set your zone","Select your USDA hardiness zone in the top bar. Plants incompatible with your zone are dimmed. The info panel shows zone-specific guidance."],
+            ["5️⃣","Ask Sprout","Click the chat bubble to ask the AI assistant about planting schedules, pest control, soil prep, or any garden question."],
+            ["6️⃣","Save and share","Your garden auto-saves in your browser. Download as a .json file to backup or share, or export as a PNG to print and hang in your shed."],
+          ].map(([num,title,desc],i)=>(
+            <div key={i} style={{display:"flex",gap:12,padding:12,background:"#fff",borderRadius:8,border:"1px solid #e0d8cf"}}>
+              <span style={{fontSize:20,flexShrink:0}}>{num}</span>
+              <div><div style={{fontWeight:700,fontSize:14,marginBottom:2}}>{title}</div><div style={{fontSize:13,color:"#555",lineHeight:1.5}}>{desc}</div></div>
+            </div>
+          ))}
+        </div>
+      </section>
+      {/* CTA */}
+      <section style={{textAlign:"center",padding:"40px 24px",background:"#eef3eb"}}>
+        <h2 style={{fontSize:24,fontWeight:700,marginBottom:12}}>Ready to Grow?</h2>
+        <p style={{fontSize:14,color:"#555",marginBottom:20}}>Start designing your garden in seconds — no account needed.</p>
+        <button onClick={()=>setShowLanding(false)} style={{padding:"14px 36px",background:"#6b8f5e",color:"#fff",border:"none",borderRadius:10,fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(107,143,94,.3)"}}>Launch Garden Planner</button>
+      </section>
+      {/* Footer */}
+      <footer style={{padding:"24px",textAlign:"center",borderTop:"1px solid #e0d8cf",color:"#999",fontSize:12}}>
+        <p>© {new Date().getFullYear()} GardenGridDesign. All rights reserved.</p>
+        <p style={{marginTop:8}}>🏷️ <strong style={{color:"#276749"}}>This Domain Is For Sale</strong> — <a href="mailto:contact@gardengriddesign.com" style={{color:"#6b8f5e"}}>Contact Us</a></p>
+      </footer>
+    </div>
+  );
+
   return (
     <div style={{display:"flex",flexDirection:"column",height:"100vh",width:"100vw",fontFamily:"'DM Sans',system-ui,sans-serif",background:T.bg,color:T.text,overflow:"hidden",fontSize:13}} onMouseMove={onMove} onMouseUp={onUp} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    {showLanding&&<LandingPage/>}
+    {/* Domain for sale banner */}
+    <div style={{background:"#276749",color:"#fff",textAlign:"center",padding:"4px 16px",fontSize:10,fontWeight:600,flexShrink:0,letterSpacing:".3px"}}>
+      🏷️ This Domain Is For Sale — <a href="mailto:contact@gardengriddesign.com" style={{color:"#9ae6b4",textDecoration:"underline"}}>Contact Us</a>
+    </div>
     {/* HEADER */}
     <header style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px",height:46,borderBottom:`1px solid ${T.hBorder}`,background:T.head,flexShrink:0,zIndex:100}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -737,7 +833,7 @@ export default function App(){
         </div>
         <div style={{position:"relative"}}><button onClick={()=>setShowCS(s=>!s)} style={{padding:"4px 10px",border:`1px solid ${T.border}`,borderRadius:5,background:showCS?T.accentL:"#fff",cursor:"pointer",fontSize:10,fontWeight:700,color:T.textM}}>Canvas ▾</button>{showCS&&<div style={{position:"absolute",top:30,right:0,background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:12,boxShadow:"0 4px 16px rgba(0,0,0,.08)",zIndex:200,width:200}}><div style={{fontSize:11,fontWeight:700,marginBottom:6,color:T.text}}>Canvas Size</div><div style={{display:"flex",gap:8}}><label style={{fontSize:11,color:T.text}}>W:<input type="number" value={unit==="metric"?Math.round(canvasSize.w*2.54/100):canvasSize.w/12} onChange={e=>{const v=Number(e.target.value);setCanvasSize(s=>({...s,w:unit==="metric"?Math.round(v*100/2.54):v*12}));}} style={{width:48,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 4px",fontSize:12,color:T.text}} min={1}/></label><label style={{fontSize:11,color:T.text}}>H:<input type="number" value={unit==="metric"?Math.round(canvasSize.h*2.54/100):canvasSize.h/12} onChange={e=>{const v=Number(e.target.value);setCanvasSize(s=>({...s,h:unit==="metric"?Math.round(v*100/2.54):v*12}));}} style={{width:48,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 4px",fontSize:12,color:T.text}} min={1}/></label></div><div style={{display:"flex",gap:3,marginTop:8,flexWrap:"wrap"}}>{[{l:"10×10",w:120,h:120},{l:"20×20",w:240,h:240},{l:"30×40",w:360,h:480},{l:"50×50",w:600,h:600}].map(p=><button key={p.l} onClick={()=>setCanvasSize({w:p.w,h:p.h})} style={{padding:"2px 7px",border:`1px solid ${T.border}`,borderRadius:4,background:"#faf8f5",cursor:"pointer",fontSize:10,color:T.text}}>{p.l}ft</button>)}</div></div>}</div>
         <div style={{width:1,height:22,background:T.border,margin:"0 4px"}}/>
-        <span style={{fontSize:13,fontWeight:800,color:T.accent,letterSpacing:"-.3px"}}>GardenGridDesign</span>
+        <span onClick={()=>setShowLanding(true)} style={{fontSize:13,fontWeight:800,color:T.accent,letterSpacing:"-.3px",cursor:"pointer"}}>GardenGridDesign</span>
 
       </div>
     </header>
