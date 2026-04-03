@@ -283,7 +283,7 @@ const PlantSVG = ({ plant, size = 28 }) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════ */
-const PX=4, GP=24, uid=()=>Math.random().toString(36).slice(2,10), toM=i=>(i*2.54).toFixed(1), snap=px=>Math.round(px/GP)*GP;
+const PX=4, GP=12, uid=()=>Math.random().toString(36).slice(2,10), toM=i=>(i*2.54).toFixed(1), snap=px=>Math.round(px/GP)*GP;
 const toFtIn=(inches)=>{const ft=Math.floor(inches/12);const inn=inches%12;return ft>0?(inn>0?`${ft}' ${inn}"`:ft+"'"):inn+"\"";};
 const USDA_ZONES=["1","2","3","4","5","6","7","8","9","10","11","12","13"];
 const CATS=["All","Fruiting","Leafy","Brassica","Root","Allium","Legume","Herb","Fruit","Trees","Companion","Other"];
